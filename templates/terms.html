@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service &amp; Privacy Policy | WebWallet</title>
+  <link rel="icon" href="/static/images/webwallet_icon.jpg">
+  <link rel="stylesheet" href="/static/css/webwallet.css?v=2.7.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .legal-container {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 20px 80px;
+    }
+    .legal-header {
+      text-align: center;
+      padding: 40px 0 30px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 40px;
+    }
+    .legal-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+      line-height: 1.7;
+    }
+    .legal-section h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 0;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .legal-section h2 i {
+      color: var(--accent-cyan);
+      font-size: 1.15rem;
+    }
+    .legal-section p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      margin-bottom: 16px;
+    }
+    .legal-section ul {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    .legal-section li {
+      margin-bottom: 8px;
+    }
+    .legal-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: rgba(10, 15, 29, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    @media (max-width: 768px) {
+      .legal-container {
+        margin: 20px auto;
+        padding: 0 14px 60px;
+      }
+      .legal-section {
+        padding: 20px 16px;
+        border-radius: 12px;
+      }
+      .legal-header h1 {
+        font-size: 1.8rem !important;
+      }
+      .legal-nav-bar {
+        padding: 12px 14px;
+      }
+    }
+  </style>
+</head>
+<body style="background:var(--bg-base); color:var(--text-main); font-family:var(--font-sans); display:block; width:100%; min-height:100vh; margin:0; padding:0;">
+
+  <!-- Sticky Navbar -->
+  <header class="legal-nav-bar">
+    <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="window.location.href='/'">
+      <img src="/static/images/webwallet_logo.jpg" alt="WebWallet" style="height:32px; object-fit:contain;">
+      <span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(0,242,254,0.3);">LEGAL &amp; COMPLIANCE</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="/" class="btn-action" style="padding:8px 16px; text-decoration:none;"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="/app" class="btn-action primary" style="padding:8px 18px; text-decoration:none;"><i class="fa-solid fa-rocket"></i> Launch App</a>
+    </div>
+  </header>
+
+  <div class="legal-container">
+    <div class="legal-header">
+      <span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); margin-bottom:12px;">
+        <i class="fa-solid fa-shield-halved"></i> OFFICIAL PLATFORM POLICY
+      </span>
+      <h1 style="font-size:2.4rem; font-weight:800; margin:10px 0 14px; color:#fff;">Terms of Service &amp; Privacy Policy</h1>
+      <div style="color:var(--text-muted); font-size:0.85rem;">
+        Last Updated: November 6, 2026 • Effective Immediately for All WebWallet Users
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="legal-section">
+      <h2><i class="fa-solid fa-file-contract"></i> 1. Acceptance of Terms</h2>
+      <p>
+        Welcome to WebWallet ("WebWallet", "Platform", "we", "us", or "our"). By accessing or using our website, native applications (including Android APK, Windows, and iOS builds), Discord bot integration, and any associated APIs, you agree to be bound by these Terms of Service ("Terms") and our Privacy Policy.
+      </p>
+      <p>
+        If you do not agree to these Terms, you must immediately discontinue use of the platform. By creating an account, registering an email, or connecting via Discord OAuth, you represent and warrant that you are at least 18 years of age and possess full legal capacity to enter into these binding terms.
+      </p>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="legal-section">
+      <h2><i class="fa-solid fa-wallet"></i> 2. Cryptographic Wallet Services &amp; Addresses</h2>
+      <p>
+        WebWallet provides a multi-chain cryptographic asset management interface allowing users to store, send, receive, swap, and tip supported cryptocurrencies including Bitcoin (BTC), Ethereum (ETH), Litecoin (LTC), Solana (SOL), Dogecoin (DOGE), TRON (TRX), Polygon (POL), and USD Stablecoins (USDT/USDC).
+      </p>
+      <ul>
+        <li><strong>Unique Addresses:</strong> Each registered user receives dedicated cryptographic deposit addresses generated with standardized Base58Check and EVM hex formats.</li>
+        <li><strong>Deposit Tracking:</strong> Inbound on-chain transactions are detected automatically via public blockchain node explorers. Balances are credited upon requisite block confirmations.</li>
+        <li><strong>Irreversibility of Blockchain Transactions:</strong> All on-chain transfers and blockchain broadcasts are final, irrevocable, and cannot be reversed by WebWallet administrators.</li>
+      </ul>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="legal-section">
+      <h2><i class="fa-solid fa-arrows-rotate"></i> 3. Automated Token Swaps &amp; Market Rates</h2>
+      <p>
+        WebWallet provides automated cross-chain swapping functionality. By submitting a swap request, you acknowledge and agree that:
+      </p>
+      <ul>
+        <li>Rates are determined dynamically based on real-time aggregated market price feeds.</li>
+        <li>Applicable platform routing fees (0.25% to 0.75%) and miner gas fees are transparently disclosed before order confirmation.</li>
+        <li>Due to blockchain network volatility, slight price variations may occur during network broadcast.</li>
+      </ul>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="legal-section">
+      <h2><i class="fa-brands fa-discord"></i> 4. Peer-to-Peer Tipping &amp; Social Transfers</h2>
+      <p>
+        Users may execute zero-fee internal tips and peer-to-peer transfers to other platform members using their username, email, Discord User ID, or deposit address.
+      </p>
+      <ul>
+        <li>Internal transfers are settled instantly within the WebWallet encrypted vault ledger.</li>
+        <li>You are solely responsible for verifying the counterparty identifier before authorizing a transfer.</li>
+        <li>Tipping bots operating within third-party Discord servers or Telegram communities are subject to server rules and platform guidelines.</li>
+      </ul>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="legal-section">
+      <h2><i class="fa-solid fa-ban"></i> 5. Prohibited Conduct &amp; Compliance</h2>
+      <p>
+        You strictly agree not to use WebWallet for any unlawful purposes, including but not limited to:
+      </p>
+      <ul>
+        <li>Money laundering, terrorist financing, or sanctions evasion under applicable international law.</li>
+        <li>Operating unlicensed gambling, extortion schemes, malware distribution, or deceptive fraud.</li>
+        <li>Attempting to bypass access controls, exploit vulnerability boundaries, or compromise user isolation.</li>
+      </ul>
+      <p>
+        WebWallet reserves the right to suspend or freeze accounts and refuse service to any entity engaging in prohibited activities.
+      </p>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="legal-section" id="privacy">
+      <h2><i class="fa-solid fa-user-shield"></i> 6. Privacy Policy &amp; Data Protection</h2>
+      <p>
+        We respect your privacy and employ data minimization principles across all services:
+      </p>
+      <ul>
+        <li><strong>Data Collected:</strong> Account usernames, optional hashed email addresses, Discord public identifiers (if connected), cryptographic deposit addresses, and on-chain transaction history.</li>
+        <li><strong>Transaction Privacy:</strong> Personal transaction histories are strictly isolated. Users may only view records associated with their personal user ID.</li>
+        <li><strong>Data Security:</strong> Database records are encrypted at rest using PRAGMA WAL SQLite storage. We do not sell or monetize personal user information.</li>
+      </ul>
+    </div>
+
+    <!-- Section 7 -->
+    <div class="legal-section">
+      <h2><i class="fa-solid fa-triangle-exclamation"></i> 7. Risk Disclosure &amp; Limitation of Liability</h2>
+      <p>
+        Digital asset prices are subject to extreme market volatility. Holding, transferring, or trading cryptocurrencies entails significant financial risk.
+      </p>
+      <p>
+        WebWallet and its software contributors shall not be held liable for any indirect, incidental, or consequential damages resulting from network forks, blockchain outages, third-party node delays, loss of user credentials, or market fluctuations.
+      </p>
+    </div>
+
+    <!-- Section 8 -->
+    <div class="legal-section">
+      <h2><i class="fa-solid fa-envelope"></i> 8. Contact &amp; Support</h2>
+      <p>
+        If you have questions regarding these Terms, account security, or privacy inquiries, please contact our support desk:
+      </p>
+      <div style="background:var(--bg-input); padding:16px 20px; border-radius:12px; font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-cyan);">
+        Support Email: support@webwallet.io<br>
+        Discord Community: discord.gg/webwallet<br>
+        Official Portal: https://webwallet.io
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align:center; padding:30px 20px; border-top:1px solid var(--border-subtle); color:var(--text-muted); font-size:0.8rem;">
+    &copy; 2026 WebWallet Multi-Chain Foundation. All rights reserved. • <a href="/" style="color:var(--accent-cyan); text-decoration:none;">Home</a> • <a href="/app" style="color:var(--accent-cyan); text-decoration:none;">Dashboard</a> • <a href="/terms" style="color:var(--accent-cyan); text-decoration:none;">Terms &amp; Privacy</a>
+  </footer>
+
+</body>
+</html>
+

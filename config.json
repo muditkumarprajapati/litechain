@@ -1,0 +1,33 @@
+{
+  "token": "YOUR_DISCORD_BOT_TOKEN",
+  "prefix": "$",
+  "bot_name": "LiteChain",
+  "owner_ids": [
+    "1523293430858383441"
+  ],
+  "emoji_guild_id": "1539956978611392592",
+  "custom_status": "LiteChain | Maintaining Ltc Transactions",
+  "web_port": 8080,
+  "auto_deposit_poll_interval": 25,
+  "log_channels": {
+    "tip_logs": null,
+    "deposit_logs": null,
+    "withdraw_logs": null
+  },
+  "emojis": {
+    "ltc": "🪙",
+    "dollar": "💵",
+    "success": "✅",
+    "cancel": "❌",
+    "tip": "💸",
+    "received": "📥",
+    "deposit": "💳",
+    "withdraw": "🏧",
+    "wallet": "👛",
+    "stats": "📊",
+    "leaderboard": "🏆",
+    "loading": "⏳",
+    "chart_up": "📈",
+    "chart_down": "📉"
+  }
+}

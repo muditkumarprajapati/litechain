@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebWallet | Multi-Chain Crypto Wallet &amp; Financial Suite</title>
+  <link rel="icon" href="/static/images/webwallet_icon.jpg">
+  <link rel="stylesheet" href="/static/css/webwallet.css?v=2.7.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* High-impact WebWallet Landing Page Themes */
+    :root {
+      --home-hero-bg: radial-gradient(circle at 50% 10%, rgba(0, 242, 254, 0.12) 0%, rgba(139, 92, 246, 0.08) 35%, transparent 70%);
+    }
+
+    body {
+      display: block !important;
+      width: 100% !important;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #060911;
+    }
+
+    .home-navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 40px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(8, 12, 24, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .home-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .home-nav-item {
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.92rem;
+      text-decoration: none;
+      transition: color 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .home-nav-item:hover {
+      color: var(--accent-cyan);
+    }
+
+    /* Hero Section */
+    .hero-section {
+      position: relative;
+      padding: 80px 20px 60px;
+      text-align: center;
+      background: var(--home-hero-bg);
+      overflow: hidden;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 30px;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: var(--accent-cyan);
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+    }
+
+    .hero-title {
+      font-size: 3.4rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      color: #fff;
+      max-width: 900px;
+      margin: 0 auto 20px;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 720px;
+      margin: 0 auto 34px;
+      line-height: 1.6;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    .hero-btn {
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 800;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .hero-btn.primary {
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      color: #040714;
+      box-shadow: 0 4px 25px rgba(0, 242, 254, 0.35);
+    }
+
+    .hero-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(0, 242, 254, 0.5);
+    }
+
+    .hero-btn.secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+    }
+
+    .hero-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Live Ticker Bar */
+    .ticker-bar {
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      padding: 16px 24px;
+      background: rgba(10, 15, 29, 0.9);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      scrollbar-width: none;
+      justify-content: center;
+    }
+
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+
+    /* Mockup Showcase Card */
+    .hero-mockup-card {
+      max-width: 820px;
+      margin: 0 auto;
+      background: linear-gradient(145deg, rgba(16, 24, 48, 0.9), rgba(8, 12, 24, 0.95));
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 242, 254, 0.15);
+      position: relative;
+      text-align: left;
+    }
+
+    /* Features Matrix */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-icon-box {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    /* Footer */
+    .home-footer {
+      background: #040711;
+      border-top: 1px solid var(--border-subtle);
+      padding: 60px 40px 30px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .home-mobile-toggle {
+      display: none;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.1rem;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .home-mobile-menu {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(8, 12, 24, 0.98);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 20px;
+      gap: 16px;
+      z-index: 999;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+
+    .home-mobile-menu.active {
+      display: flex;
+    }
+
+    @media (max-width: 768px) {
+      .home-navbar {
+        padding: 14px 16px;
+        position: relative;
+      }
+      .home-nav-links {
+        display: none;
+      }
+      .home-mobile-toggle {
+        display: block;
+      }
+      .hero-title {
+        font-size: 2.1rem;
+        line-height: 1.2;
+      }
+      .hero-subtitle {
+        font-size: 0.95rem;
+      }
+      .hero-section {
+        padding: 50px 16px 40px;
+      }
+      .hero-mockup-card {
+        padding: 20px 16px;
+        border-radius: 16px;
+      }
+      .feature-grid {
+        grid-template-columns: 1fr;
+        padding: 40px 16px;
+      }
+      .feature-card {
+        padding: 22px 18px;
+      }
+      .home-footer {
+        padding: 40px 20px 24px;
+      }
+      .ticker-bar {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body style="background:var(--bg-base); color:var(--text-main); font-family:var(--font-sans); display:block; width:100%; min-height:100vh; margin:0; padding:0;">
+
+  <!-- 1. Header / Navbar -->
+  <header class="home-navbar">
+    <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <img src="/static/images/webwallet_logo.jpg" alt="WebWallet" style="height:36px; object-fit:contain;">
+      <span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(0,242,254,0.3); font-size:0.75rem;">WEB3 VAULT</span>
+    </div>
+
+    <nav class="home-nav-links">
+      <a href="#features" class="home-nav-item"><i class="fa-solid fa-layer-group"></i> Features</a>
+      <a href="#markets" class="home-nav-item"><i class="fa-solid fa-chart-line"></i> Markets</a>
+      <a href="#download" class="home-nav-item"><i class="fa-solid fa-mobile-screen"></i> Apps</a>
+      <a href="/terms" class="home-nav-item"><i class="fa-solid fa-shield-halved"></i> Terms</a>
+    </nav>
+
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="/app" class="btn-action" style="padding:9px 18px; text-decoration:none; font-weight:700;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+      </a>
+      <a href="/app" class="btn-action primary" style="padding:9px 20px; text-decoration:none; font-weight:800; background:linear-gradient(135deg, #00f2fe, #4facfe); color:#040714;">
+        <i class="fa-solid fa-rocket"></i> Launch App
+      </a>
+      <button class="home-mobile-toggle" onclick="toggleHomeMobileMenu()" aria-label="Toggle navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Drawer Dropdown -->
+    <div class="home-mobile-menu" id="homeMobileMenu">
+      <a href="#features" class="home-nav-item" onclick="toggleHomeMobileMenu()"><i class="fa-solid fa-layer-group"></i> Features</a>
+      <a href="#markets" class="home-nav-item" onclick="toggleHomeMobileMenu()"><i class="fa-solid fa-chart-line"></i> Markets</a>
+      <a href="#download" class="home-nav-item" onclick="toggleHomeMobileMenu()"><i class="fa-solid fa-mobile-screen"></i> Apps</a>
+      <a href="/terms" class="home-nav-item" onclick="toggleHomeMobileMenu()"><i class="fa-solid fa-shield-halved"></i> Terms &amp; Privacy</a>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <a href="/app" class="btn-action" style="flex:1; justify-content:center; text-decoration:none;">Sign In</a>
+        <a href="/app" class="btn-action primary" style="flex:1; justify-content:center; text-decoration:none; background:linear-gradient(135deg, #00f2fe, #4facfe); color:#040714;">Launch App</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Hero Section -->
+  <section class="hero-section">
+    <div class="hero-badge">
+      <i class="fa-solid fa-bolt"></i> NEXT-GEN MULTI-CHAIN CRYPTO FINANCIAL SUITE
+    </div>
+    
+    <h1 class="hero-title">
+      Your Gateway to a New Era of <span>Crypto Finance</span>
+    </h1>
+    
+    <p class="hero-subtitle">
+      Store, send, swap, tip, and audit 50+ cryptocurrencies with zero fees across major blockchains. Built with dedicated cryptographic addresses, real-time on-chain tracking, and Discord community integration.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="/app" class="hero-btn primary">
+        <i class="fa-solid fa-rocket"></i> Launch Web App
+      </a>
+      <a href="/api/download/android-apk" class="hero-btn secondary" download="WebWallet-v2.6.4.apk">
+        <i class="fa-brands fa-android" style="color:var(--accent-emerald);"></i> Download Android APK
+      </a>
+      <a href="/api/download/windows-exe" class="hero-btn secondary" download="WebWallet-Setup-2.6.4.exe">
+        <i class="fa-brands fa-windows" style="color:var(--accent-cyan);"></i> Windows Desktop (.EXE)
+      </a>
+    </div>
+
+    <!-- Hero Mockup Card -->
+    <div class="hero-mockup-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:18px; margin-bottom:20px;">
+        <div>
+          <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:700;">TOTAL PORTFOLIO VALUATION</div>
+          <div style="font-size:2.2rem; font-weight:900; font-family:var(--font-mono); color:#fff; display:flex; align-items:center; gap:8px;">
+            $48,250.00 <span style="font-size:1.1rem; color:var(--text-muted); font-weight:500;">USD</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); font-size:0.85rem; padding:6px 12px;">
+            <i class="fa-solid fa-arrow-trend-up"></i> +5.24% (24h)
+          </span>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Multi-Sig Vault Active</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:22px;">
+        <a href="/app" style="background:rgba(0,242,254,0.1); border:1px solid rgba(0,242,254,0.25); border-radius:12px; padding:12px; text-align:center; color:var(--accent-cyan); text-decoration:none; font-weight:700; font-size:0.88rem;">
+          <i class="fa-solid fa-circle-arrow-down" style="display:block; font-size:1.2rem; margin-bottom:6px;"></i> Deposit
+        </a>
+        <a href="/app" style="background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.25); border-radius:12px; padding:12px; text-align:center; color:var(--accent-rose); text-decoration:none; font-weight:700; font-size:0.88rem;">
+          <i class="fa-solid fa-circle-arrow-up" style="display:block; font-size:1.2rem; margin-bottom:6px;"></i> Send Crypto
+        </a>
+        <a href="/app" style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); border-radius:12px; padding:12px; text-align:center; color:var(--accent-amber); text-decoration:none; font-weight:700; font-size:0.88rem;">
+          <i class="fa-solid fa-arrows-rotate" style="display:block; font-size:1.2rem; margin-bottom:6px;"></i> Instant Swap
+        </a>
+        <a href="/app" style="background:rgba(88,101,242,0.1); border:1px solid rgba(88,101,242,0.25); border-radius:12px; padding:12px; text-align:center; color:var(--accent-blurple); text-decoration:none; font-weight:700; font-size:0.88rem;">
+          <i class="fa-brands fa-discord" style="display:block; font-size:1.2rem; margin-bottom:6px;"></i> Discord Tip
+        </a>
+      </div>
+
+      <!-- Supported Chain Logos Pill -->
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); border-radius:12px; padding:12px 18px; font-size:0.82rem; color:var(--text-secondary); flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-shield-check" style="color:var(--accent-emerald);"></i> 50+ Blockchains Supported
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; font-weight:700; color:#fff;">
+          <span>BTC</span> • <span>ETH</span> • <span>LTC</span> • <span>SOL</span> • <span>DOGE</span> • <span>TRX</span> • <span>USDT</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Live Ticker Bar -->
+  <div class="ticker-bar" id="liveTickerBar">
+    <div class="ticker-item"><strong style="color:#fff;">BTC:</strong> $68,450.00 <span style="color:var(--accent-emerald);">+3.2%</span></div>
+    <div class="ticker-item"><strong style="color:#fff;">ETH:</strong> $3,520.40 <span style="color:var(--accent-emerald);">+2.8%</span></div>
+    <div class="ticker-item"><strong style="color:#fff;">LTC:</strong> $74.50 <span style="color:var(--accent-emerald);">+5.4%</span></div>
+    <div class="ticker-item"><strong style="color:#fff;">SOL:</strong> $184.20 <span style="color:var(--accent-emerald);">+6.1%</span></div>
+    <div class="ticker-item"><strong style="color:#fff;">DOGE:</strong> $0.162 <span style="color:var(--accent-emerald);">+4.2%</span></div>
+    <div class="ticker-item"><strong style="color:#fff;">TRX:</strong> $0.165 <span style="color:var(--accent-emerald);">+1.5%</span></div>
+    <div class="ticker-item"><strong style="color:#fff;">BNB:</strong> $585.00 <span style="color:var(--accent-emerald);">+2.1%</span></div>
+  </div>
+
+  <!-- 4. Core Features Showcase -->
+  <section id="features" style="max-width:1200px; margin:0 auto; padding:80px 20px 40px; text-align:center;">
+    <span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(0,242,254,0.3); background:rgba(0,242,254,0.1); margin-bottom:12px;">
+      WHY CHOOSE WEBWALLET
+    </span>
+    <h2 style="font-size:2.4rem; font-weight:900; margin:10px 0 16px; color:#fff;">The Premier Web3 Super App</h2>
+    <p style="color:var(--text-secondary); max-width:680px; margin:0 auto 40px; font-size:1rem;">
+      Combining non-custodial cryptographic custody with zero-fee community micro-payments and instant cross-chain swaps.
+    </p>
+
+    <div class="feature-grid">
+      <!-- 1 -->
+      <div class="feature-card">
+        <div class="feature-icon-box" style="background:rgba(0,242,254,0.12); color:var(--accent-cyan); border:1px solid rgba(0,242,254,0.3);">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:12px;">Dedicated Multi-Chain Addresses</h3>
+        <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+          Every user receives their own persistent cryptographic addresses with Base58Check checksums (LTC, BTC, DOGE, TRX) and EVM hex formats. Automated listeners track and credit incoming transfers in real time.
+        </p>
+      </div>
+
+      <!-- 2 -->
+      <div class="feature-card">
+        <div class="feature-icon-box" style="background:rgba(88,101,242,0.12); color:var(--accent-blurple); border:1px solid rgba(88,101,242,0.3);">
+          <i class="fa-brands fa-discord"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:12px;">Zero-Fee Discord &amp; P2P Tipping</h3>
+        <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+          Send instant zero-fee tips to any member using their Discord ID, username, or deposit address. Perfect for community rewards, server giveaways, and peer-to-peer micro-transactions.
+        </p>
+      </div>
+
+      <!-- 3 -->
+      <div class="feature-card">
+        <div class="feature-icon-box" style="background:rgba(245,158,11,0.12); color:var(--accent-amber); border:1px solid rgba(245,158,11,0.3);">
+          <i class="fa-solid fa-shuffle"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:12px;">Instant Cross-Chain Swaps</h3>
+        <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+          Swap LTC, BTC, ETH, SOL, DOGE, and Stablecoins at real-time market rates with zero slippage. Automated multi-chain conversion settled directly inside your vault.
+        </p>
+      </div>
+
+      <!-- 4 -->
+      <div class="feature-card">
+        <div class="feature-icon-box" style="background:rgba(16,185,129,0.12); color:var(--accent-emerald); border:1px solid rgba(16,185,129,0.3);">
+          <i class="fa-solid fa-mobile-screen"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:12px;">Proper Native Applications</h3>
+        <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+          Run WebWallet on mobile and desktop as a true native binary. Direct downloadable Android APK and 64-bit Windows executable with biometric security and hardware acceleration.
+        </p>
+      </div>
+
+      <!-- 5 -->
+      <div class="feature-card">
+        <div class="feature-icon-box" style="background:rgba(139,92,246,0.12); color:var(--accent-purple); border:1px solid rgba(139,92,246,0.3);">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:12px;">Private &amp; Audited Personal Ledger</h3>
+        <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+          Users strictly see only their own transactions. Enjoy 1-click TXID copies, verified public block explorer links, and instant CSV spreadsheet exports for tax reporting.
+        </p>
+      </div>
+
+      <!-- 6 -->
+      <div class="feature-card">
+        <div class="feature-icon-box" style="background:rgba(6,182,212,0.12); color:var(--accent-cyan); border:1px solid rgba(6,182,212,0.3);">
+          <i class="fa-solid fa-database"></i>
+        </div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:12px;">Institutional-Grade Security</h3>
+        <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+          Encrypted SQLite PRAGMA WAL database architecture, rate-limited Discord OAuth2 gateways, multi-sig cold storage routing, and automated security safeguards.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Live Crypto Markets Explorer -->
+  <section id="markets" style="max-width:1200px; margin:0 auto; padding:60px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; flex-wrap:wrap; gap:16px;">
+      <div>
+        <span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); margin-bottom:8px;">
+          LIVE MARKET FEED
+        </span>
+        <h2 style="font-size:2.2rem; font-weight:900; margin:0; color:#fff;">Cryptocurrency Market Overview</h2>
+      </div>
+      <a href="/app" class="btn-action primary" style="padding:10px 20px; text-decoration:none; font-weight:700;">
+        <i class="fa-solid fa-wallet"></i> Open WebWallet
+      </a>
+    </div>
+
+    <div class="table-card" style="padding:0; overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="custom-table" style="margin:0;">
+          <thead>
+            <tr>
+              <th style="padding-left:24px;">Asset</th>
+              <th>Live Price</th>
+              <th>24h Change</th>
+              <th>24h High / Low</th>
+              <th style="text-align:right; padding-right:24px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="homeMarketsTbody">
+            <tr>
+              <td style="padding-left:24px;">
+                <div class="asset-flex">
+                  <img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" style="width:32px; height:32px; border-radius:50%;" alt="BTC">
+                  <div>
+                    <div style="font-weight:800; color:#fff;">BTC <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">Bitcoin</span></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Mainnet • SegWit</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:800; color:#fff;">$68,450.00</td>
+              <td><span style="color:var(--accent-emerald); font-weight:700;">+3.20%</span></td>
+              <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">$69,120 / $66,800</td>
+              <td style="text-align:right; padding-right:24px;">
+                <a href="/app" class="btn-action" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Deposit / Manage</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-left:24px;">
+                <div class="asset-flex">
+                  <img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" style="width:32px; height:32px; border-radius:50%;" alt="ETH">
+                  <div>
+                    <div style="font-weight:800; color:#fff;">ETH <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">Ethereum</span></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">ERC20 • Arbitrum • Base</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:800; color:#fff;">$3,520.40</td>
+              <td><span style="color:var(--accent-emerald); font-weight:700;">+2.84%</span></td>
+              <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">$3,590 / $3,440</td>
+              <td style="text-align:right; padding-right:24px;">
+                <a href="/app" class="btn-action" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Deposit / Manage</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-left:24px;">
+                <div class="asset-flex">
+                  <img src="https://assets.coingecko.com/coins/images/2/small/litecoin.png" style="width:32px; height:32px; border-radius:50%;" alt="LTC">
+                  <div>
+                    <div style="font-weight:800; color:#fff;">LTC <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">Litecoin</span></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Native Mainnet</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:800; color:#fff;">$74.50</td>
+              <td><span style="color:var(--accent-emerald); font-weight:700;">+5.42%</span></td>
+              <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">$76.20 / $71.10</td>
+              <td style="text-align:right; padding-right:24px;">
+                <a href="/app" class="btn-action" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Deposit / Manage</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-left:24px;">
+                <div class="asset-flex">
+                  <img src="https://assets.coingecko.com/coins/images/4128/small/solana.png" style="width:32px; height:32px; border-radius:50%;" alt="SOL">
+                  <div>
+                    <div style="font-weight:800; color:#fff;">SOL <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">Solana</span></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">SPL Network</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:800; color:#fff;">$184.20</td>
+              <td><span style="color:var(--accent-emerald); font-weight:700;">+6.10%</span></td>
+              <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">$189.50 / $175.00</td>
+              <td style="text-align:right; padding-right:24px;">
+                <a href="/app" class="btn-action" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Deposit / Manage</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-left:24px;">
+                <div class="asset-flex">
+                  <img src="https://assets.coingecko.com/coins/images/5/small/dogecoin.png" style="width:32px; height:32px; border-radius:50%;" alt="DOGE">
+                  <div>
+                    <div style="font-weight:800; color:#fff;">DOGE <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">Dogecoin</span></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Native Doge Network</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:800; color:#fff;">$0.162</td>
+              <td><span style="color:var(--accent-emerald); font-weight:700;">+4.25%</span></td>
+              <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">$0.170 / $0.155</td>
+              <td style="text-align:right; padding-right:24px;">
+                <a href="/app" class="btn-action" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Deposit / Manage</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Native Apps Download Section -->
+  <section id="download" style="max-width:1200px; margin:0 auto; padding:60px 20px 80px; text-align:center;">
+    <span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(0,242,254,0.3); background:rgba(0,242,254,0.1); margin-bottom:12px;">
+      MOBILE &amp; DESKTOP
+    </span>
+    <h2 style="font-size:2.4rem; font-weight:900; margin:10px 0 16px; color:#fff;">Get the Native App Everywhere</h2>
+    <p style="color:var(--text-secondary); max-width:680px; margin:0 auto 40px; font-size:1rem;">
+      Enjoy hardware biometric security (Face ID &amp; Fingerprint), instant real-time transaction notifications, and standalone low-latency streaming.
+    </p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px;">
+      <!-- Android -->
+      <div class="card" style="padding:32px; text-align:center; border:1px solid rgba(16,185,129,0.3);">
+        <div style="width:64px; height:64px; border-radius:16px; background:rgba(16,185,129,0.15); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-emerald); font-size:2rem; margin-bottom:18px;">
+          <i class="fa-brands fa-android"></i>
+        </div>
+        <h3 style="font-size:1.3rem; font-weight:800; color:#fff; margin-bottom:8px;">Android Native App</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:20px;">
+          Direct compiled APK for Android phones and tablets. Real-time background notifications and camera QR code scanning.
+        </p>
+        <a href="/api/download/android-apk" download="WebWallet-v2.6.4.apk" class="btn-action primary" style="width:100%; justify-content:center; padding:12px; font-size:0.95rem; text-decoration:none;">
+          <i class="fa-solid fa-download"></i> Download APK (v2.6.4)
+        </a>
+      </div>
+
+      <!-- Windows -->
+      <div class="card" style="padding:32px; text-align:center; border:1px solid rgba(6,182,212,0.3);">
+        <div style="width:64px; height:64px; border-radius:16px; background:rgba(6,182,212,0.15); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-cyan); font-size:2rem; margin-bottom:18px;">
+          <i class="fa-brands fa-windows"></i>
+        </div>
+        <h3 style="font-size:1.3rem; font-weight:800; color:#fff; margin-bottom:8px;">Windows Desktop</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:20px;">
+          Standalone 64-bit Windows executable. Native window mode with hardware-accelerated charting and encrypted vault.
+        </p>
+        <a href="/api/download/windows-exe" download="WebWallet-Setup-2.6.4.exe" class="btn-action primary" style="width:100%; justify-content:center; padding:12px; font-size:0.95rem; text-decoration:none; background:linear-gradient(135deg, #0284c7, #06b6d4);">
+          <i class="fa-solid fa-download"></i> Download EXE (v2.6.4)
+        </a>
+      </div>
+
+      <!-- Web App -->
+      <div class="card" style="padding:32px; text-align:center; border:1px solid rgba(139,92,246,0.3);">
+        <div style="width:64px; height:64px; border-radius:16px; background:rgba(139,92,246,0.15); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-purple); font-size:2rem; margin-bottom:18px;">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+        <h3 style="font-size:1.3rem; font-weight:800; color:#fff; margin-bottom:8px;">Web3 Cloud App</h3>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:20px;">
+          Access your wallet anywhere from any browser. Zero installation required with instant biometric or Discord sign in.
+        </p>
+        <a href="/app" class="btn-action" style="width:100%; justify-content:center; padding:12px; font-size:0.95rem; text-decoration:none;">
+          <i class="fa-solid fa-rocket"></i> Launch Web App
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Footer -->
+  <footer class="home-footer">
+    <div style="max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; margin-bottom:50px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+          <img src="/static/images/webwallet_logo.jpg" alt="WebWallet" style="height:32px; object-fit:contain;">
+          <span style="font-weight:900; color:#fff; font-size:1.1rem;">WebWallet</span>
+        </div>
+        <p style="line-height:1.6; font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
+          Enterprise multi-chain crypto wallet, cross-chain swap aggregator, and community financial suite.
+        </p>
+        <div style="display:flex; gap:12px; font-size:1.1rem;">
+          <a href="#" style="color:var(--text-muted);"><i class="fa-brands fa-discord"></i></a>
+          <a href="#" style="color:var(--text-muted);"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" style="color:var(--text-muted);"><i class="fa-brands fa-telegram"></i></a>
+          <a href="#" style="color:var(--text-muted);"><i class="fa-brands fa-github"></i></a>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:#fff; font-size:0.95rem; margin-top:0; margin-bottom:16px;">Products</h4>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <a href="/app" style="color:var(--text-muted); text-decoration:none;">Multi-Chain Wallet</a>
+          <a href="/app" style="color:var(--text-muted); text-decoration:none;">Instant Swaps</a>
+          <a href="/app" style="color:var(--text-muted); text-decoration:none;">Discord Tipping</a>
+          <a href="/api/download/android-apk" style="color:var(--text-muted); text-decoration:none;">Android APK</a>
+          <a href="/api/download/windows-exe" style="color:var(--text-muted); text-decoration:none;">Windows Desktop</a>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:#fff; font-size:0.95rem; margin-top:0; margin-bottom:16px;">Supported Blockchains</h4>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="color:var(--text-muted);">Bitcoin (BTC)</span>
+          <span style="color:var(--text-muted);">Ethereum (ETH)</span>
+          <span style="color:var(--text-muted);">Litecoin (LTC)</span>
+          <span style="color:var(--text-muted);">Solana (SOL)</span>
+          <span style="color:var(--text-muted);">Dogecoin (DOGE)</span>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:#fff; font-size:0.95rem; margin-top:0; margin-bottom:16px;">Legal &amp; Security</h4>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <a href="/terms" style="color:var(--text-muted); text-decoration:none;">Terms of Service</a>
+          <a href="/terms#privacy" style="color:var(--text-muted); text-decoration:none;">Privacy Policy</a>
+          <a href="/terms" style="color:var(--text-muted); text-decoration:none;">Risk Disclosures</a>
+          <a href="/terms" style="color:var(--text-muted); text-decoration:none;">AML Compliance</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:1200px; margin:0 auto; padding-top:24px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; font-size:0.8rem;">
+      <div>&copy; 2026 WebWallet Multi-Chain Foundation. All rights reserved.</div>
+      <div style="display:flex; gap:20px;">
+        <a href="/" style="color:var(--text-muted); text-decoration:none;">Home</a>
+        <a href="/app" style="color:var(--text-muted); text-decoration:none;">Dashboard</a>
+        <a href="/terms" style="color:var(--text-muted); text-decoration:none;">Terms</a>
+        <a href="/terms#privacy" style="color:var(--text-muted); text-decoration:none;">Privacy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleHomeMobileMenu() {
+      const menu = document.getElementById('homeMobileMenu');
+      if (menu) menu.classList.toggle('active');
+    }
+
+    // Live Market Rates fetch for Home Page
+    async function loadHomeMarketRates() {
+      try {
+        const res = await fetch('/api/market/overview');
+        if (res.status !== 200) return;
+        const data = await res.json();
+        const market = data.market || {};
+        const prices = market.prices || {};
+        const changes = market.changes_24h || {};
+        const coins = data.supported_coins || [];
+
+        // 1. Update Ticker Bar
+        const tickerBar = document.getElementById('liveTickerBar');
+        if (tickerBar && Object.keys(prices).length > 0) {
+          tickerBar.innerHTML = Object.keys(prices).slice(0, 10).map(coin => {
+            const p = prices[coin] || 0;
+            const change = changes[coin] || 0;
+            const isUp = change >= 0;
+            return `
+              <div class="ticker-item">
+                <strong style="color:#fff;">${coin}:</strong> $${Number(p).toLocaleString(undefined, {minimumFractionDigits: p < 1 ? 4 : 2, maximumFractionDigits: p < 1 ? 4 : 2})}
+                <span style="color:${isUp ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight:700;">${isUp ? '+' : ''}${Number(change).toFixed(2)}%</span>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // 2. Update Home Markets Table
+        const tbody = document.getElementById('homeMarketsTbody');
+        if (tbody && coins.length > 0) {
+          tbody.innerHTML = coins.slice(0, 8).map(c => {
+            const p = prices[c.symbol] || 0;
+            const change = changes[c.symbol] || 0;
+            const isUp = change >= 0;
+            const high = p * 1.025;
+            const low = p * 0.975;
+            return `
+              <tr>
+                <td style="padding-left:24px;">
+                  <div class="asset-flex" style="display:flex; align-items:center; gap:12px;">
+                    <img src="${c.icon_url || ''}" style="width:32px; height:32px; border-radius:50%; object-fit:contain;" alt="${c.symbol}">
+                    <div>
+                      <div style="font-weight:800; color:#fff;">${c.symbol} <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">${c.name}</span></div>
+                      <div style="font-size:0.75rem; color:var(--text-muted);">${c.default_network || 'Mainnet'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-family:var(--font-mono); font-weight:800; color:#fff;">$${Number(p).toLocaleString(undefined, {minimumFractionDigits: p < 1 ? 4 : 2, maximumFractionDigits: p < 1 ? 4 : 2})}</td>
+                <td><span style="color:${isUp ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight:700;">${isUp ? '+' : ''}${Number(change).toFixed(2)}%</span></td>
+                <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">$${Number(high).toLocaleString(undefined, {maximumFractionDigits: p < 1 ? 4 : 2})} / $${Number(low).toLocaleString(undefined, {maximumFractionDigits: p < 1 ? 4 : 2})}</td>
+                <td style="text-align:right; padding-right:24px;">
+                  <a href="/app" class="btn-action primary" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Deposit / Manage</a>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (e) {
+        console.error('Home market rate load error:', e);
+      }
+    }
+    loadHomeMarketRates();
+    setInterval(loadHomeMarketRates, 10000);
+  </script>
+</body>
+</html>
+

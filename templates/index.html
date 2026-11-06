@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebWallet | Enterprise Multi-Chain Cryptocurrency Platform</title>
+  <link rel="icon" type="image/jpeg" href="/static/images/webwallet_icon.jpg">
+  <link rel="stylesheet" href="/static/css/webwallet.css?v=2.7.7">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for real financial analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <div class="app-wrapper">
+
+    <!-- Left Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header" style="display:flex; align-items:center; gap:12px; padding:18px 20px;">
+        <!-- WebWallet Official Icon -->
+        <img src="/static/images/webwallet_icon.jpg" alt="WebWallet Icon"
+          style="width:40px; height:40px; border-radius:10px; object-fit:cover; box-shadow:0 0 15px rgba(139, 92, 246, 0.4); flex-shrink:0;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="brand-title" style="font-size:1.15rem; font-weight:800; letter-spacing:-0.5px;">Web<span
+                style="color:var(--accent-purple);">Wallet</span></span>
+            <span class="brand-badge">V2.07</span>
+          </div>
+          <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">Multi-Chain Institutional</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Navigation</div>
+        <a href="/" class="nav-link" style="text-decoration:none;">
+          <i class="fa-solid fa-house" style="color:var(--accent-cyan);"></i>
+          <span>Homepage</span>
+        </a>
+
+        <div class="nav-section-title">Core Wallet</div>
+        <div class="nav-link active" onclick="switchView('overview')">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Overview</span>
+        </div>
+        <div class="nav-link" onclick="switchView('my-wallet')">
+          <i class="fa-solid fa-wallet"></i>
+          <span>My Wallet</span>
+        </div>
+        <div class="nav-link" onclick="openModal('depositModal')">
+          <i class="fa-solid fa-circle-down"></i>
+          <span>Deposit</span>
+        </div>
+        <div class="nav-link" onclick="openModal('withdrawModal')">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Withdraw</span>
+        </div>
+        <div class="nav-link" onclick="openModal('tipModal')">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Send / Tip</span>
+        </div>
+        <div class="nav-link" onclick="openModal('swapModal')">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Swap</span>
+        </div>
+
+        <div class="nav-section-title">Platform</div>
+        <div class="nav-link" onclick="switchView('transactions')">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Transactions</span>
+        </div>
+        <div class="nav-link" onclick="switchView('downloads')">
+          <i class="fa-solid fa-download"></i>
+          <span>Download App</span>
+          <span class="brand-badge"
+            style="margin-left:auto; font-size:0.65rem; background:rgba(6,182,212,0.15); color:var(--accent-cyan); border-color:var(--accent-cyan);">APK</span>
+        </div>
+        <div class="nav-link" onclick="switchView('markets')">
+          <i class="fa-solid fa-arrow-trend-up"></i>
+          <span>Markets</span>
+        </div>
+        <a href="/terms" class="nav-link" style="text-decoration:none;">
+          <i class="fa-solid fa-shield-halved" style="color:var(--accent-emerald);"></i>
+          <span>Terms &amp; Privacy</span>
+        </a>
+
+        <div class="nav-section-title">Account</div>
+        <div class="nav-link" onclick="switchView('profile')">
+          <i class="fa-solid fa-user-shield"></i>
+          <span>Profile</span>
+        </div>
+        <div class="nav-link" onclick="switchView('security')">
+          <i class="fa-solid fa-lock"></i>
+          <span>Security</span>
+        </div>
+
+        <!-- Admin Panel Link (Only visible to admin) -->
+        <div id="adminSidebarItem" style="display:none;">
+          <div class="nav-section-title" style="color:var(--accent-cyan);">Management</div>
+          <div class="nav-link" onclick="switchView('admin')" style="color:var(--accent-cyan);">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Admin Center</span>
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-circle"
+              style="color:var(--accent-emerald); font-size:0.5rem; margin-right:4px;"></i> Multi-Sig Vault</span>
+          <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">v2.6 Real</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Viewport -->
+    <div class="main-area">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+          <div class="topbar-search">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-muted); font-size:0.85rem;"></i>
+            <input type="text" placeholder="Search tokens, transactions, hashes..."
+              oninput="handleGlobalSearch(this.value)">
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Live Market Ticker Pill -->
+          <div class="ticker-strip-pill" id="topbarTicker">
+            <span><strong style="color:var(--accent-purple);">BTC</strong> $--</span>
+            <span><strong style="color:var(--accent-cyan);">ETH</strong> $--</span>
+            <span><strong style="color:var(--accent-emerald);">SOL</strong> $--</span>
+          </div>
+
+          <!-- User Authentication Area -->
+          <div id="topbarUserArea">
+            <button class="btn-action primary" onclick="openModal('authModal')">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Login / Register
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Views Container -->
+      <main class="page-container">
+
+        <!-- Platform Global Announcement Banner -->
+        <div id="globalAnnouncementBanner"
+          style="display:none; background:linear-gradient(90deg, rgba(139,92,246,0.18), rgba(6,182,212,0.18)); border:1px solid rgba(139,92,246,0.3); border-radius:12px; padding:12px 18px; margin-bottom:24px; font-size:0.88rem; color:#fff; display:flex; align-items:center; gap:12px;">
+          <i class="fa-solid fa-bullhorn" style="color:var(--accent-cyan);"></i>
+          <span id="announcementText" style="flex:1; font-weight:600;">Welcome to WebWallet!</span>
+        </div>
+
+        <!-- ================= VIEW 1: OVERVIEW ================= -->
+        <section id="view-overview" class="view-section active">
+
+          <div class="dashboard-grid">
+            <!-- Portfolio Hero Card -->
+            <div class="card portfolio-hero-card">
+              <div>
+                <div class="portfolio-top">
+                  <span class="portfolio-lbl">
+                    <span>REAL WALLET BALANCE</span>
+                    <i class="fa-regular fa-eye" id="visEye" onclick="toggleBalanceVisibility()" style="cursor:pointer;"
+                      title="Hide/Show Balance"></i>
+                  </span>
+                  <span class="portfolio-pnl-badge"><i class="fa-solid fa-arrow-trend-up"></i> Real-Time PnL</span>
+                </div>
+                <div class="portfolio-balance" id="totalBalanceUsd">$0.00 <span
+                    style="font-size:1.1rem; color:var(--text-muted); font-weight:500;">USD</span></div>
+                <p style="font-size:0.85rem; color:var(--text-secondary);"><i class="fa-solid fa-shield-halved"
+                    style="color:var(--accent-cyan); margin-right:6px;"></i> Non-Custodial Multi-Chain Vault Protected
+                </p>
+              </div>
+
+              <div class="portfolio-actions">
+                <button class="btn-action primary" onclick="openModal('depositModal')">
+                  <i class="fa-solid fa-circle-down"></i> Deposit
+                </button>
+                <button class="btn-action" onclick="openModal('withdrawModal')">
+                  <i class="fa-solid fa-paper-plane"></i> Withdraw
+                </button>
+                <button class="btn-action" onclick="openModal('tipModal')">
+                  <i class="fa-solid fa-bolt"></i> Send / Tip
+                </button>
+                <button class="btn-action" onclick="openModal('swapModal')">
+                  <i class="fa-solid fa-arrows-rotate"></i> Swap
+                </button>
+              </div>
+            </div>
+
+            <!-- Portfolio Allocation Donut Chart -->
+            <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
+              <div style="font-size:0.95rem; font-weight:800; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>Asset Allocation</span>
+                <span style="font-size:0.72rem; color:var(--accent-cyan); font-weight:700; letter-spacing:0.5px;"><i class="fa-solid fa-water"></i> LIQUID ROLL</span>
+              </div>
+              <div style="height:170px; position:relative; display:flex; align-items:center; justify-content:center;">
+                <!-- Liquid In That Roll (Doughnut Ring with Liquid & RGB Stream) -->
+                <div class="liquid-roll-container">
+                  <div class="roll-track">
+                    <div class="roll-liquid-flow"></div>
+                    <div class="roll-wave-pulse"></div>
+                    <div class="roll-specular"></div>
+                  </div>
+                  <!-- Overlay Chart for multiple crypto holdings -->
+                  <canvas id="allocationChart" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:3; pointer-events:none;"></canvas>
+                  <!-- Clean Center Circle (No Liquid inside - purely prominent $0) -->
+                  <div id="allocationCenterText" class="roll-center-display">
+                    <div class="roll-amount" id="allocDisplayAmount">$0</div>
+                    <div class="roll-sub" id="allocDisplaySub">USD BALANCE</div>
+                  </div>
+                </div>
+              </div>
+              <div id="allocationLegend"
+                style="display:flex; justify-content:center; gap:12px; font-size:0.75rem; margin-top:8px; flex-wrap:wrap;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Portfolio Performance Chart -->
+          <div class="card" style="margin-bottom:28px;">
+            <div class="chart-header">
+              <div>
+                <div style="font-size:1.15rem; font-weight:800;">Portfolio Performance</div>
+                <div style="font-size:0.8rem; color:var(--text-secondary);">Real-time historical valuation across all
+                  integrated networks</div>
+              </div>
+              <div class="timeframe-selector">
+                <button class="tf-btn active" onclick="switchTimeframe('24H', this)">24H</button>
+                <button class="tf-btn" onclick="switchTimeframe('7D', this)">7D</button>
+                <button class="tf-btn" onclick="switchTimeframe('1M', this)">1M</button>
+                <button class="tf-btn" onclick="switchTimeframe('3M', this)">3M</button>
+                <button class="tf-btn" onclick="switchTimeframe('1Y', this)">1Y</button>
+                <button class="tf-btn" onclick="switchTimeframe('ALL', this)">ALL</button>
+              </div>
+            </div>
+            <div style="height:260px; width:100%;">
+              <canvas id="portfolioChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Crypto Assets Table -->
+          <div class="table-card">
+            <div class="table-head-flex">
+              <div>
+                <div class="section-heading">Multi-Chain Assets</div>
+                <div style="font-size:0.82rem; color:var(--text-secondary); margin-top:2px;">Live Binance market rates
+                  with verified coin logos</div>
+              </div>
+              <button class="btn-action" style="padding:6px 14px; font-size:0.8rem;" onclick="switchView('my-wallet')">
+                View All 14 Assets <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Cryptocurrency</th>
+                    <th>Market Price</th>
+                    <th>24h Change</th>
+                    <th>Available Balance</th>
+                    <th>USD Valuation</th>
+                    <th style="text-align:right;">Quick Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewAssetsTbody">
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);"><i
+                        class="fa-solid fa-spinner fa-spin"></i> Loading assets and real crypto images...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ================= VIEW 2: MY WALLET ================= -->
+        <section id="view-my-wallet" class="view-section">
+          <div class="table-card">
+            <div class="table-head-flex">
+              <div>
+                <div class="section-heading">My Multi-Chain Wallets</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary);">Dedicated deposit addresses with real
+                  cryptographic tokens</div>
+              </div>
+            </div>
+            <div id="fullWalletsGrid"
+              style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:20px;">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 3: TRANSACTIONS (AUDITED PERSONAL LEDGER) ================= -->
+        <section id="view-transactions" class="view-section">
+
+          <!-- Transaction Summary Metrics -->
+          <div
+            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:16px; margin-bottom:20px;">
+            <div class="card" style="padding:18px 22px; position:relative; overflow:hidden;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div
+                    style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
+                    Total Inflow (Received)</div>
+                  <div id="txTotalInflow"
+                    style="font-size:1.55rem; font-weight:800; color:var(--accent-emerald); font-family:var(--font-mono);">
+                    $0.00</div>
+                </div>
+                <div
+                  style="width:38px; height:38px; border-radius:10px; background:rgba(16,185,129,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-emerald); font-size:1rem;">
+                  <i class="fa-solid fa-arrow-down-left"></i>
+                </div>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">Deposits &amp; inbound transfers
+              </div>
+            </div>
+
+            <div class="card" style="padding:18px 22px; position:relative; overflow:hidden;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div
+                    style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
+                    Total Outflow (Sent)</div>
+                  <div id="txTotalOutflow"
+                    style="font-size:1.55rem; font-weight:800; color:var(--accent-rose); font-family:var(--font-mono);">
+                    $0.00</div>
+                </div>
+                <div
+                  style="width:38px; height:38px; border-radius:10px; background:rgba(244,63,94,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-rose); font-size:1rem;">
+                  <i class="fa-solid fa-arrow-up-right"></i>
+                </div>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">Withdrawals &amp; outbound tips
+              </div>
+            </div>
+
+            <div class="card" style="padding:18px 22px; position:relative; overflow:hidden;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div
+                    style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
+                    Completed Transactions</div>
+                  <div id="txTotalCompleted"
+                    style="font-size:1.55rem; font-weight:800; color:var(--accent-cyan); font-family:var(--font-mono);">
+                    0</div>
+                </div>
+                <div
+                  style="width:38px; height:38px; border-radius:10px; background:rgba(6,182,212,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-cyan); font-size:1rem;">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">Confirmed on blockchain</div>
+            </div>
+
+            <div class="card" style="padding:18px 22px; position:relative; overflow:hidden;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div
+                    style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
+                    Pending Confirmation</div>
+                  <div id="txTotalPending"
+                    style="font-size:1.55rem; font-weight:800; color:var(--accent-amber); font-family:var(--font-mono);">
+                    0</div>
+                </div>
+                <div
+                  style="width:38px; height:38px; border-radius:10px; background:rgba(245,158,11,0.12); display:flex; align-items:center; justify-content:center; color:var(--accent-amber); font-size:1rem;">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">Awaiting network blocks</div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <!-- Table Header & Action Toolbar -->
+            <div class="table-head-flex"
+              style="flex-wrap:wrap; gap:16px; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:18px; margin-bottom:18px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                  <div class="section-heading" style="margin:0;">Transaction History</div>
+                  <span class="brand-badge"
+                    style="color:var(--accent-emerald); background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.3); font-size:0.75rem;">
+                    <span
+                      style="width:7px; height:7px; border-radius:50%; background:var(--accent-emerald); display:inline-block; margin-right:4px;"></span>
+                    Personal Audited Ledger
+                  </span>
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">
+                  Cryptographically audited ledger of your deposits, withdrawals, transfers, and token swaps.
+                </div>
+              </div>
+
+              <!-- Action Toolbar: Export CSV, Refresh -->
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button class="btn-action" style="padding:8px 14px; font-size:0.82rem; gap:6px;"
+                  onclick="exportTransactionsCSV()" title="Download transaction records as CSV spreadsheet">
+                  <i class="fa-solid fa-file-arrow-down" style="color:var(--accent-cyan);"></i> Export CSV
+                </button>
+                <button class="btn-action" style="padding:8px 14px; font-size:0.82rem; gap:6px;"
+                  onclick="loadTransactions(); showToast('Transaction records refreshed 🔄');" title="Refresh ledger">
+                  <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                </button>
+              </div>
+            </div>
+
+            <!-- Multi-Criteria Filter Controls -->
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:20px;">
+              <!-- Primary Type Navigation Tabs -->
+              <div class="tx-filter-pills" id="txFilterGroup">
+                <button class="tx-pill-btn active" onclick="filterTransactionsView('ALL', this)"><i
+                    class="fa-solid fa-layer-group"></i> All Activity</button>
+                <button class="tx-pill-btn" onclick="filterTransactionsView('DEPOSIT', this)"><i
+                    class="fa-solid fa-arrow-down-left" style="color:var(--accent-emerald);"></i> Deposits</button>
+                <button class="tx-pill-btn" onclick="filterTransactionsView('WITHDRAW', this)"><i
+                    class="fa-solid fa-arrow-up-right" style="color:var(--accent-rose);"></i> Withdrawals</button>
+                <button class="tx-pill-btn" onclick="filterTransactionsView('TIP_SENT', this)"><i
+                    class="fa-solid fa-paper-plane" style="color:var(--accent-blurple);"></i> Tips Sent</button>
+                <button class="tx-pill-btn" onclick="filterTransactionsView('TIP_RECEIVED', this)"><i
+                    class="fa-solid fa-hand-holding-dollar" style="color:var(--accent-cyan);"></i> Tips
+                  Received</button>
+                <button class="tx-pill-btn" onclick="filterTransactionsView('SWAP', this)"><i
+                    class="fa-solid fa-shuffle" style="color:var(--accent-amber);"></i> Swaps</button>
+              </div>
+
+              <!-- Search, Status Filter, and Asset Filter -->
+              <div
+                style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:1; max-width:560px; justify-content:flex-end;">
+                <!-- Status Select -->
+                <select id="txStatusFilter" class="form-select"
+                  style="padding:7px 12px; font-size:0.82rem; width:auto; min-width:130px;"
+                  onchange="filterTransactionsStatus(this.value)">
+                  <option value="ALL">All Statuses</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="PENDING">Pending</option>
+                </select>
+
+                <!-- Asset Select -->
+                <select id="txAssetFilter" class="form-select"
+                  style="padding:7px 12px; font-size:0.82rem; width:auto; min-width:120px;"
+                  onchange="filterTransactionsAsset(this.value)">
+                  <option value="ALL">All Assets</option>
+                  <option value="LTC">LTC (Litecoin)</option>
+                  <option value="BTC">BTC (Bitcoin)</option>
+                  <option value="ETH">ETH (Ethereum)</option>
+                  <option value="USDT">USDT (Tether)</option>
+                  <option value="USDC">USDC (USD Coin)</option>
+                  <option value="BNB">BNB (Binance)</option>
+                  <option value="SOL">SOL (Solana)</option>
+                  <option value="DOGE">DOGE (Dogecoin)</option>
+                  <option value="TRX">TRX (TRON)</option>
+                  <option value="POL">POL (Polygon)</option>
+                </select>
+
+                <!-- Search Input -->
+                <div style="position:relative; min-width:180px; flex:1;">
+                  <i class="fa-solid fa-magnifying-glass"
+                    style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.8rem;"></i>
+                  <input type="text" id="txSearchInput" class="form-input" placeholder="Search TXID, address..."
+                    style="padding:7px 12px 7px 32px; font-size:0.82rem; border-radius:8px;"
+                    oninput="filterTransactionsSearch(this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="desktop-tx-table" style="overflow-x:auto;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th style="width:140px;">Type</th>
+                    <th>Asset</th>
+                    <th>Amount</th>
+                    <th>Transaction ID (TXID)</th>
+                    <th>Counterparty / Details</th>
+                    <th>Date &amp; Time</th>
+                    <th>Status</th>
+                    <th style="text-align:right;">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody id="fullTxTbody">
+                  <tr>
+                    <td colspan="8" style="text-align:center; padding:35px; color:var(--text-muted);">Please connect
+                      your wallet to view transactions.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Mobile Cards View (displayed automatically on screens <= 768px) -->
+            <div class="mobile-tx-cards" id="mobileTxCardsContainer"
+              style="display:none; flex-direction:column; gap:12px;">
+              <!-- Populated by JS for mobile view -->
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ================= VIEW 4: DOWNLOAD APP ================= -->
+        <section id="view-downloads" class="view-section">
+          <div class="card" style="margin-bottom:24px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                  <h2 style="font-size:1.6rem; font-weight:800; margin:0;">Download WebWallet Native App</h2>
+                  <span class="brand-badge"
+                    style="color:var(--accent-cyan); background:rgba(6,182,212,0.12); border-color:var(--accent-cyan);">v2.6.4
+                    Stable</span>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.92rem; max-width:700px; margin:0;">
+                  Run WebWallet as a true native application on your mobile device or desktop PC. Enjoy hardware
+                  biometric security (Face ID & Fingerprint), instant real-time incoming transfer notifications, and
+                  ultra-low latency blockchain streaming.
+                </p>
+              </div>
+
+              <div style="display:flex; gap:8px;" id="platformFilterTabs">
+                <button class="tf-btn active" onclick="filterDownloadPlatform('all', this)"><i
+                    class="fa-solid fa-layer-group"></i> All Platforms</button>
+                <button class="tf-btn" onclick="filterDownloadPlatform('mobile', this)"><i
+                    class="fa-solid fa-mobile-screen"></i> Mobile</button>
+                <button class="tf-btn" onclick="filterDownloadPlatform('desktop', this)"><i
+                    class="fa-solid fa-desktop"></i> Desktop</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Cards Grid -->
+          <div
+            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-bottom:30px;">
+
+            <!-- 1. Android Native APK -->
+            <div class="card dl-card dl-mobile"
+              style="position:relative; overflow:hidden; border:1px solid rgba(16,185,129,0.3);">
+              <div style="position:absolute; top:12px; right:12px;">
+                <span class="brand-badge"
+                  style="color:var(--accent-emerald); background:rgba(16,185,129,0.12); border-color:var(--accent-emerald);">POPULAR</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                <div
+                  style="width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.2)); border:1px solid rgba(16,185,129,0.4); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--accent-emerald);">
+                  <i class="fa-brands fa-android"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:1.15rem; color:#fff;">Android Native (.APK)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">
+                    WebWallet-v2.6.4.apk • 24.8 MB</div>
+                </div>
+              </div>
+              <p style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5;">
+                Direct standalone APK package for Android smartphones and tablets (Android 8.0+). Includes biometric
+                login, camera QR code scanner, and background push notifications.
+              </p>
+              <div
+                style="background:var(--bg-input); border-radius:8px; padding:10px 12px; font-size:0.75rem; color:var(--text-muted); margin-bottom:18px; font-family:var(--font-mono);">
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent-emerald);"></i> SHA-256:
+                8a4f91e847c2d1b...
+              </div>
+              <a href="/api/download/android-apk" download="WebWallet-v2.6.4.apk" class="btn-action primary"
+                style="width:100%; justify-content:center; padding:12px; text-decoration:none; font-size:0.95rem;">
+                <i class="fa-solid fa-download"></i> Download Android APK
+              </a>
+            </div>
+
+            <!-- 2. Windows Desktop Installer -->
+            <div class="card dl-card dl-desktop" style="border:1px solid rgba(6,182,212,0.3);">
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                <div
+                  style="width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg, rgba(6,182,212,0.2), rgba(139,92,246,0.2)); border:1px solid rgba(6,182,212,0.4); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--accent-cyan);">
+                  <i class="fa-brands fa-windows"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:1.15rem; color:#fff;">Windows Desktop (.EXE)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">
+                    WebWallet-Setup-2.6.4.exe • 9.9 MB</div>
+                </div>
+              </div>
+              <p style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5;">
+                Native 64-bit standalone desktop app for Windows 10 and Windows 11. Hardware-accelerated charting,
+                standalone window mode, and encrypted local keystore.
+              </p>
+              <div
+                style="background:var(--bg-input); border-radius:8px; padding:10px 12px; font-size:0.75rem; color:var(--text-muted); margin-bottom:18px; font-family:var(--font-mono);">
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent-cyan);"></i> Windows 10 / 11 64-bit
+                Verified PE
+              </div>
+              <a href="/api/download/windows-exe" download="WebWallet-Setup-2.6.4.exe" class="btn-action primary"
+                style="width:100%; justify-content:center; padding:12px; text-decoration:none; font-size:0.95rem; background:linear-gradient(135deg, #0284c7, #06b6d4);">
+                <i class="fa-solid fa-download"></i> Download for Windows
+              </a>
+            </div>
+
+            <!-- 3. iOS Application (.IPA) -->
+            <div class="card dl-card dl-mobile" style="border:1px solid rgba(139,92,246,0.3);">
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                <div
+                  style="width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg, rgba(139,92,246,0.2), rgba(244,63,94,0.2)); border:1px solid rgba(139,92,246,0.4); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--accent-purple);">
+                  <i class="fa-brands fa-apple"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:1.15rem; color:#fff;">Apple iOS (.IPA)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">
+                    WebWallet-v2.6.4.ipa • 32.1 MB</div>
+                </div>
+              </div>
+              <p style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5;">
+                Enterprise package for iPhone &amp; iPad (iOS 14.0+). Compatible with direct side-loading, AltStore, and
+                TestFlight beta programs. Face ID protected.
+              </p>
+              <div
+                style="background:var(--bg-input); border-radius:8px; padding:10px 12px; font-size:0.75rem; color:var(--text-muted); margin-bottom:18px; font-family:var(--font-mono);">
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent-purple);"></i> Apple iOS 14.0+
+                (Universal)
+              </div>
+              <a href="/api/download/ios-ipa" download="WebWallet-v2.6.4.ipa" class="btn-action"
+                style="width:100%; justify-content:center; padding:12px; text-decoration:none; font-size:0.95rem;">
+                <i class="fa-solid fa-download"></i> Download iOS IPA
+              </a>
+            </div>
+
+            <!-- 4. macOS Desktop (.DMG) -->
+            <div class="card dl-card dl-desktop" style="border:1px solid rgba(139,92,246,0.3);">
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                <div
+                  style="width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.2)); border:1px solid rgba(139,92,246,0.4); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:#fff;">
+                  <i class="fa-brands fa-apple"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:1.15rem; color:#fff;">macOS (.DMG)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">
+                    WebWallet-2.6.4.dmg • 74.2 MB</div>
+                </div>
+              </div>
+              <p style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5;">
+                Universal binary for macOS with native support for Apple Silicon (M1, M2, M3) and Intel Macs. Touch ID
+                integration and native menubar widget.
+              </p>
+              <div
+                style="background:var(--bg-input); border-radius:8px; padding:10px 12px; font-size:0.75rem; color:var(--text-muted); margin-bottom:18px; font-family:var(--font-mono);">
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent-cyan);"></i> macOS 11 Big Sur &amp; Newer
+              </div>
+              <a href="/api/download/macos-dmg" download="WebWallet-2.6.4.dmg" class="btn-action"
+                style="width:100%; justify-content:center; padding:12px; text-decoration:none; font-size:0.95rem;">
+                <i class="fa-solid fa-download"></i> Download macOS DMG
+              </a>
+            </div>
+
+            <!-- 5. Linux (.AppImage) -->
+            <div class="card dl-card dl-desktop" style="border:1px solid rgba(245,158,11,0.3);">
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                <div
+                  style="width:50px; height:50px; border-radius:12px; background:linear-gradient(135deg, rgba(245,158,11,0.2), rgba(244,63,94,0.2)); border:1px solid rgba(245,158,11,0.4); display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--accent-amber);">
+                  <i class="fa-brands fa-linux"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:1.15rem; color:#fff;">Linux (.AppImage)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">
+                    WebWallet-2.6.4.AppImage • 62.0 MB</div>
+                </div>
+              </div>
+              <p style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5;">
+                Self-contained Linux executable. Runs seamlessly on Ubuntu, Debian, Fedora, Arch, and all major
+                distributions without dependencies.
+              </p>
+              <div
+                style="background:var(--bg-input); border-radius:8px; padding:10px 12px; font-size:0.75rem; color:var(--text-muted); margin-bottom:18px; font-family:var(--font-mono);">
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent-amber);"></i> glibc 2.28+ Compatible
+              </div>
+              <a href="/api/download/linux-appimage" download="WebWallet-2.6.4.AppImage" class="btn-action"
+                style="width:100%; justify-content:center; padding:12px; text-decoration:none; font-size:0.95rem;">
+                <i class="fa-solid fa-download"></i> Download AppImage
+              </a>
+            </div>
+
+          </div>
+
+          <!-- Android APK Quick Installation Guide -->
+          <div class="card" style="border-left:4px solid var(--accent-emerald);">
+            <div class="section-heading" style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              <i class="fa-solid fa-circle-question" style="color:var(--accent-emerald);"></i>
+              How to Install the APK on Your Android Device
+            </div>
+            <div
+              style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; font-size:0.85rem; color:var(--text-secondary);">
+              <div style="background:var(--bg-input); padding:14px; border-radius:10px;">
+                <strong style="color:#fff; display:block; margin-bottom:6px;">1. Tap Download</strong>
+                Click the "Download Android APK" button above to save <code>WebWallet-v2.6.4.apk</code> to your device.
+              </div>
+              <div style="background:var(--bg-input); padding:14px; border-radius:10px;">
+                <strong style="color:#fff; display:block; margin-bottom:6px;">2. Open Downloads</strong>
+                Tap the downloaded file from your browser notification or file manager.
+              </div>
+              <div style="background:var(--bg-input); padding:14px; border-radius:10px;">
+                <strong style="color:#fff; display:block; margin-bottom:6px;">3. Allow Unknown Sources</strong>
+                If prompted by Android, toggle "Allow from this source" in Settings to permit the package install.
+              </div>
+              <div style="background:var(--bg-input); padding:14px; border-radius:10px;">
+                <strong style="color:#fff; display:block; margin-bottom:6px;">4. Launch & Sign In</strong>
+                Tap "Install" then "Open". Your multi-chain keys and biometrics are automatically configured!
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 4: MARKETS ================= -->
+        <section id="view-markets" class="view-section">
+          <div class="table-card">
+            <div class="table-head-flex">
+              <div>
+                <div class="section-heading">Cryptocurrency Markets</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary);">Real-time ticker stream with verified
+                  crypto imagery</div>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Price (USD)</th>
+                    <th>24h Change</th>
+                    <th>24h High</th>
+                    <th>24h Low</th>
+                    <th>24h Volume</th>
+                  </tr>
+                </thead>
+                <tbody id="marketsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 5: PROFILE ================= -->
+        <section id="view-profile" class="view-section">
+          <div class="card" style="max-width:700px; margin:0 auto 28px;">
+            <div
+              style="display:flex; align-items:center; gap:20px; border-bottom:1px solid var(--border-subtle); padding-bottom:24px; margin-bottom:24px;">
+              <img id="profileAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png"
+                style="width:72px; height:72px; border-radius:50%; border:2px solid var(--accent-purple);">
+              <div>
+                <div style="font-size:1.4rem; font-weight:800;" id="profileUsername">Not Signed In</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); font-family:var(--font-mono);"
+                  id="profileDiscordId">Please sign in to access your wallet</div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                  <span class="brand-badge" id="profileRoleBadge">GUEST</span>
+                  <span class="brand-badge"
+                    style="color:var(--text-muted); border-color:var(--border-subtle);">WEB3</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+              <div
+                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">MEMBER SINCE</div>
+                <div style="font-size:1rem; font-weight:700;" id="profileJoinedDate">Nov 2026</div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">SECURITY STATUS</div>
+                <div style="font-size:1rem; font-weight:700; color:var(--accent-emerald);"><i
+                    class="fa-solid fa-circle-check"></i> High (PIN Enabled)</div>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border-subtle); padding-top:20px;">
+              <button class="btn-action" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3);"
+                onclick="executeLogout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Disconnect / Logout
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 6: SECURITY ================= -->
+        <section id="view-security" class="view-section">
+          <div class="card" style="max-width:700px; margin:0 auto 28px;">
+            <div class="section-heading" style="margin-bottom:16px;">Security & Access Controls</div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:24px;">Manage your Security PIN,
+              Master Secret Key, and session safeguards.</p>
+
+            <div
+              style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:18px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:700; font-size:0.95rem;">Two-Factor Authentication (2FA)</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Require secondary verification for high-value
+                    withdrawals</div>
+                </div>
+                <span class="brand-badge" style="color:var(--accent-emerald);">PROTECTED</span>
+              </div>
+            </div>
+
+            <div
+              style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:18px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:700; font-size:0.95rem;">Master Security PIN</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Used to authorize transactions & logins
+                    without Discord OAuth</div>
+                </div>
+                <span style="font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700;">••••••</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 7: ADMIN CENTER (COMPREHENSIVE) ================= -->
+        <section id="view-admin" class="view-section">
+
+          <!-- Platform Stats -->
+          <div class="table-card" style="margin-bottom:28px;">
+            <div class="table-head-flex">
+              <div>
+                <div class="section-heading" style="color:var(--accent-cyan);"><i class="fa-solid fa-shield-halved"></i>
+                  Platform Admin Center</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary);">Real-time monitoring, liquidity reserves,
+                  user management & Discord Member Puller</div>
+              </div>
+            </div>
+
+            <div
+              style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px;">
+              <div
+                style="background:var(--bg-input); padding:18px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">TOTAL MEMBERS</div>
+                <div style="font-size:1.6rem; font-weight:800; font-family:var(--font-mono);" id="adminUsersCount">0
+                </div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:18px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">VERIFIED DISCORD OAUTH USERS</div>
+                <div
+                  style="font-size:1.6rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-blurple);"
+                  id="adminPullableCount">0</div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:18px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">PENDING WITHDRAWALS</div>
+                <div style="font-size:1.6rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-amber);"
+                  id="adminPendingCount">0</div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:18px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">PLATFORM VOLUME</div>
+                <div
+                  style="font-size:1.6rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-emerald);"
+                  id="adminVolumeUsd">$0.00</div>
+              </div>
+              <div
+                style="background:linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(236,72,153,0.1) 100%); padding:18px; border-radius:12px; border:1px solid rgba(168,85,247,0.3);">
+                <div style="font-size:0.75rem; color:var(--accent-purple); font-weight:700;">OWNER REVENUE (SPIDEYDEV)
+                </div>
+                <div style="font-size:1.6rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-cyan);"
+                  id="adminTotalRevenueUsd">$0.00</div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:18px; border-radius:12px; border:1px solid var(--border-subtle);">
+                <div style="font-size:0.75rem; color:var(--text-muted);">SWAPS COMPLETED</div>
+                <div style="font-size:1.6rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-cyan);"
+                  id="adminSwapOrdersCount">0</div>
+              </div>
+            </div>
+
+            <!-- SYSTEM MASTER SWITCHES & EMERGENCY CONTROLS -->
+            <div
+              style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:14px; padding:20px; margin-bottom:24px;">
+              <div
+                style="font-size:1rem; font-weight:800; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+                <div><i class="fa-solid fa-sliders" style="color:var(--accent-cyan); margin-right:8px;"></i> Master
+                  Engine Switches &amp; Killswitches</div>
+                <span class="brand-badge" style="color:var(--accent-emerald); border-color:var(--accent-emerald);">ALL
+                  ENGINES LIVE</span>
+              </div>
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                <div
+                  style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.85rem;">Auto-Deposits Engine</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Instant multi-chain credit</div>
+                  </div>
+                  <button class="btn-action"
+                    style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.2); color:var(--accent-emerald); border-color:var(--accent-emerald);"
+                    id="btnToggleDeposits" onclick="toggleEngineSetting('engine_deposits')">ACTIVE</button>
+                </div>
+                <div
+                  style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.85rem;">Auto-Withdrawals Broadcast</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">On-chain automated dispatch</div>
+                  </div>
+                  <button class="btn-action"
+                    style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.2); color:var(--accent-emerald); border-color:var(--accent-emerald);"
+                    id="btnToggleWithdrawals" onclick="toggleEngineSetting('engine_withdrawals')">ACTIVE</button>
+                </div>
+                <div
+                  style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.85rem;">Instant Cross-Chain Swap</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Database liquidity pool</div>
+                  </div>
+                  <button class="btn-action"
+                    style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.2); color:var(--accent-emerald); border-color:var(--accent-emerald);"
+                    id="btnToggleSwaps" onclick="toggleEngineSetting('engine_swaps')">ACTIVE</button>
+                </div>
+                <div
+                  style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.85rem;">P2P Member Tipping</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">$0.01 fee to SpideyDev</div>
+                  </div>
+                  <button class="btn-action"
+                    style="padding:4px 10px; font-size:0.75rem; background:rgba(16,185,129,0.2); color:var(--accent-emerald); border-color:var(--accent-emerald);"
+                    id="btnToggleTipping" onclick="toggleEngineSetting('engine_tipping')">ACTIVE</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- BOT STATUS CARD -->
+            <div
+              style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:14px; padding:18px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div
+                  style="width:40px; height:40px; border-radius:50%; background:var(--accent-blurple); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem;">
+                  <i class="fa-brands fa-discord"></i>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:0.95rem;" id="adminBotName">Discord Bot: Connected</div>
+                  <div style="font-size:0.78rem; color:var(--text-muted);" id="adminBotId">Client ID:
+                    1567143272936116394</div>
+                </div>
+              </div>
+              <span class="brand-badge" id="adminBotStatusBadge"
+                style="color:var(--accent-emerald); border-color:var(--accent-emerald);">ONLINE & AUTHORIZED</span>
+            </div>
+
+            <!-- GLOBAL ANNOUNCEMENT POSTER -->
+            <div
+              style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:14px; padding:20px; margin-bottom:24px;">
+              <div style="font-weight:800; font-size:1rem; margin-bottom:6px;"><i class="fa-solid fa-bullhorn"
+                  style="color:var(--accent-cyan); margin-right:8px;"></i> Broadcast Global Announcement</div>
+              <div style="display:flex; gap:12px;">
+                <input type="text" class="form-input" id="adminAnnouncementInput"
+                  placeholder="Enter announcement text to show to all users...">
+                <button class="btn-action primary" style="padding:0 20px; white-space:nowrap;"
+                  onclick="saveAdminAnnouncement()">Post Announcement</button>
+              </div>
+            </div>
+
+            <!-- DISCORD MEMBER PULLER / SERVER JOINER SECTION -->
+            <div
+              style="background:linear-gradient(135deg, rgba(88,101,242,0.15) 0%, rgba(139,92,246,0.1) 100%); border:1px solid rgba(88,101,242,0.35); border-radius:16px; padding:24px; margin-bottom:28px;">
+              <div
+                style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <div
+                    style="font-size:1.2rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-brands fa-discord" style="color:var(--accent-blurple);"></i>
+                    Discord Member Puller (Server Joiner)
+                  </div>
+                  <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">
+                    Add verified users who logged in with Discord (<code
+                      style="color:var(--accent-cyan); font-family:var(--font-mono);">guilds.join</code>) directly to
+                    your support or community server.
+                  </div>
+                </div>
+                <span class="brand-badge" style="color:var(--accent-emerald); border-color:var(--accent-emerald);">BOT
+                  OAUTH ACTIVE</span>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 2fr 1fr; gap:14px; margin-bottom:14px;">
+                <div>
+                  <label class="form-label" style="color:var(--text-main);">Target Discord Server (Guild) ID</label>
+                  <input type="text" class="form-input" id="pullGuildId" placeholder="e.g. 1539956978611392592"
+                    value="1539956978611392592">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                  <button class="btn-action primary"
+                    style="width:100%; justify-content:center; padding:12px; background:var(--grad-discord); color:#fff;"
+                    onclick="executePullMembers()">
+                    <i class="fa-solid fa-users"></i> Pull All Members
+                  </button>
+                </div>
+              </div>
+
+              <div id="pullLogsContainer"
+                style="display:none; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:10px; padding:14px; max-height:160px; overflow-y:auto; font-family:var(--font-mono); font-size:0.8rem;">
+                <!-- Logs populated by JS -->
+              </div>
+            </div>
+
+            <!-- USER MANAGEMENT & BALANCE ADJUSTMENT -->
+            <div style="margin-bottom:28px;">
+              <div style="font-size:1.05rem; font-weight:800; margin-bottom:12px;"><i class="fa-solid fa-users-gear"
+                  style="color:var(--accent-purple); margin-right:8px;"></i> Registered User Management & Balance
+                Controls</div>
+              <div style="overflow-x:auto;">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>User ID</th>
+                      <th>Account</th>
+                      <th>Identifier / Email</th>
+                      <th>Role</th>
+                      <th>Total Tokens</th>
+                      <th>Joined</th>
+                      <th style="text-align:right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersTbody">
+                    <tr>
+                      <td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);"><i
+                          class="fa-solid fa-spinner fa-spin"></i> Loading users...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pending Withdrawals Review -->
+            <div style="font-size:1.05rem; font-weight:800; margin-bottom:12px; margin-top:24px;"><i
+                class="fa-solid fa-clipboard-check" style="color:var(--accent-amber); margin-right:8px;"></i> Withdrawal
+              Review &amp; Approval Queue</div>
+            <div style="overflow-x:auto; margin-bottom:28px;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Asset</th>
+                    <th>Amount</th>
+                    <th>Destination Address</th>
+                    <th>Date</th>
+                    <th style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminWithdrawalsTbody">
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No pending
+                      withdrawals requiring manual review.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- PLATFORM REVENUE LOG (ROUTED TO SPIDEYDEV) -->
+            <div style="margin-bottom:28px;">
+              <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div>
+                  <div style="font-size:1.05rem; font-weight:800;"><i class="fa-solid fa-vault"
+                      style="color:var(--accent-purple); margin-right:8px;"></i> Platform Revenue Log (SpideyDev
+                    Beneficiary Account)</div>
+                  <div style="font-size:0.8rem; color:var(--text-secondary);">$0.01 transfer fee, $0.02 withdrawal fee,
+                    and progressive high-volume taxes routed automatically.</div>
+                </div>
+                <span class="brand-badge" style="color:var(--accent-cyan); border-color:var(--accent-cyan);">SPIDEYDEV
+                  VAULT ROUTING ACTIVE</span>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Fee Type</th>
+                      <th>Source Member</th>
+                      <th>Asset &amp; Network</th>
+                      <th>Fee (Crypto)</th>
+                      <th>Fee (USD)</th>
+                      <th>Beneficiary</th>
+                      <th>TXID</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminRevenueTbody">
+                    <tr>
+                      <td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><i
+                          class="fa-solid fa-spinner fa-spin"></i> Loading revenue log...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ALL PLATFORM TRANSACTIONS AUDIT FEED -->
+            <div style="margin-bottom:28px;">
+              <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div>
+                  <div style="font-size:1.05rem; font-weight:800;"><i class="fa-solid fa-list-check"
+                      style="color:var(--accent-cyan); margin-right:8px;"></i> All Platform Transactions Audit Feed
+                  </div>
+                  <div style="font-size:0.8rem; color:var(--text-secondary);">Real-time multi-chain ledger across all
+                    WebWallet users.</div>
+                </div>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>User</th>
+                      <th>Asset &amp; Network</th>
+                      <th>Amount</th>
+                      <th>Fee</th>
+                      <th>TXID</th>
+                      <th>Status</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminAllTxTbody">
+                    <tr>
+                      <td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><i
+                          class="fa-solid fa-spinner fa-spin"></i> Loading platform audit feed...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- PLATFORM INFRASTRUCTURE & GATEWAY HEALTH -->
+            <div
+              style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-top:20px;">
+              <div
+                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px;">
+                <div
+                  style="width:36px; height:36px; border-radius:8px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; color:var(--accent-emerald);">
+                  <i class="fa-solid fa-database"></i>
+                </div>
+                <div>
+                  <div style="font-weight:700; font-size:0.85rem;">SQLite WAL Database</div>
+                  <div style="font-size:0.75rem; color:var(--accent-emerald);">PRAGMA WAL Mode Synced</div>
+                </div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px;">
+                <div
+                  style="width:36px; height:36px; border-radius:8px; background:rgba(88,101,242,0.15); display:flex; align-items:center; justify-content:center; color:var(--accent-blurple);">
+                  <i class="fa-brands fa-discord"></i>
+                </div>
+                <div>
+                  <div style="font-weight:700; font-size:0.85rem;">Discord OAuth2 API</div>
+                  <div style="font-size:0.75rem; color:var(--accent-emerald);">Client ID: 15671432... Connected</div>
+                </div>
+              </div>
+              <div
+                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px;">
+                <div
+                  style="width:36px; height:36px; border-radius:8px; background:rgba(0,242,254,0.15); display:flex; align-items:center; justify-content:center; color:var(--accent-cyan);">
+                  <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                  <div style="font-weight:700; font-size:0.85rem;">Market Price Feeds</div>
+                  <div style="font-size:0.75rem; color:var(--accent-emerald);">Live 6s Polling Active</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. AUTHENTICATION MODAL -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-container" style="max-width:520px;">
+      <div class="modal-header"
+        style="flex-direction:column; align-items:center; text-align:center; position:relative; padding-bottom:14px;">
+        <button class="modal-close-btn" onclick="closeModal('authModal')"
+          style="position:absolute; right:16px; top:16px;">&times;</button>
+        <img src="/static/images/webwallet_logo.jpg" alt="WebWallet"
+          style="height:36px; object-fit:contain; margin-bottom:8px;">
+        <div style="font-size:0.83rem; color:var(--text-secondary);">Enterprise Multi-Chain Cryptocurrency Platform
+        </div>
+      </div>
+
+      <!-- Auth Tabs Navigation -->
+      <div
+        style="display:flex; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:10px; padding:4px; margin-bottom:20px; gap:4px; flex-wrap:wrap;">
+        <button class="tf-btn active" id="tabBtnLogin" style="flex:1; min-width:80px;" onclick="switchAuthTab('login')">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+        </button>
+        <button class="tf-btn" id="tabBtnRegister" style="flex:1; min-width:80px;" onclick="switchAuthTab('register')">
+          <i class="fa-solid fa-user-plus"></i> Register
+        </button>
+        <button class="tf-btn" id="tabBtnDiscord" style="flex:1; min-width:80px;" onclick="switchAuthTab('discord')">
+          <i class="fa-brands fa-discord"></i> Discord
+        </button>
+        <button class="tf-btn" id="tabBtnPin" style="flex:1; min-width:80px;" onclick="switchAuthTab('pin')">
+          <i class="fa-solid fa-key"></i> PIN
+        </button>
+      </div>
+
+      <!-- TAB 1: SIGN IN -->
+      <div id="authTabLogin">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="loginEmailInput" placeholder="name@example.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="loginPasswordInput" placeholder="Enter your password">
+        </div>
+
+        <button class="btn-action primary"
+          style="width:100%; justify-content:center; padding:13px; font-size:0.95rem; margin-top:8px;"
+          onclick="submitEmailLogin()">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+        </button>
+
+        <div style="display:flex; align-items:center; margin:18px 0; color:var(--text-muted); font-size:0.75rem;">
+          <div style="flex:1; height:1px; background:var(--border-subtle);"></div>
+          <span style="padding:0 10px; text-transform:uppercase; letter-spacing:0.5px;">Or Continue With</span>
+          <div style="flex:1; height:1px; background:var(--border-subtle);"></div>
+        </div>
+
+        <a href="/api/auth/discord/login" class="btn-action"
+          style="width:100%; justify-content:center; padding:12px; font-size:0.9rem; background:rgba(88,101,242,0.15); border:1px solid rgba(88,101,242,0.4); color:#fff; text-decoration:none; display:flex; align-items:center; gap:8px;">
+          <i class="fa-brands fa-discord" style="color:var(--accent-blurple); font-size:1.1rem;"></i> Continue with
+          Discord
+        </a>
+
+        <div style="text-align:center; margin-top:16px; font-size:0.82rem; color:var(--text-secondary);">
+          Don't have an account? <a href="javascript:void(0)" onclick="switchAuthTab('register')"
+            style="color:var(--accent-cyan); font-weight:700; text-decoration:none;">Register Now</a>
+        </div>
+      </div>
+
+      <!-- TAB 2: REGISTER -->
+      <div id="authTabRegister" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="regUsernameInput" placeholder="e.g. Satoshi_2026">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="regEmailInput" placeholder="name@example.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Create Password</label>
+          <input type="password" class="form-input" id="regPasswordInput" placeholder="Create a secure password">
+        </div>
+
+        <button class="btn-action primary"
+          style="width:100%; justify-content:center; padding:13px; font-size:0.95rem; margin-top:8px;"
+          onclick="submitEmailRegister()">
+          <i class="fa-solid fa-user-plus"></i> Create WebWallet Account
+        </button>
+
+        <div style="display:flex; align-items:center; margin:18px 0; color:var(--text-muted); font-size:0.75rem;">
+          <div style="flex:1; height:1px; background:var(--border-subtle);"></div>
+          <span style="padding:0 10px; text-transform:uppercase; letter-spacing:0.5px;">Or Fast Register With</span>
+          <div style="flex:1; height:1px; background:var(--border-subtle);"></div>
+        </div>
+
+        <a href="/api/auth/discord/login" class="btn-action"
+          style="width:100%; justify-content:center; padding:12px; font-size:0.9rem; background:rgba(88,101,242,0.15); border:1px solid rgba(88,101,242,0.4); color:#fff; text-decoration:none; display:flex; align-items:center; gap:8px;">
+          <i class="fa-brands fa-discord" style="color:var(--accent-blurple); font-size:1.1rem;"></i> Sign Up with
+          Discord
+        </a>
+
+        <div style="text-align:center; margin-top:16px; font-size:0.82rem; color:var(--text-secondary);">
+          Already have an account? <a href="javascript:void(0)" onclick="switchAuthTab('login')"
+            style="color:var(--accent-cyan); font-weight:700; text-decoration:none;">Sign In</a>
+        </div>
+      </div>
+
+      <!-- TAB 3: DISCORD AUTH -->
+      <div id="authTabDiscord" style="display:none; text-align:center; padding:10px 6px 14px;">
+        <div
+          style="width:68px; height:68px; border-radius:50%; background:rgba(88,101,242,0.15); border:1px solid rgba(88,101,242,0.35); display:inline-flex; align-items:center; justify-content:center; margin-bottom:14px;">
+          <i class="fa-brands fa-discord" style="color:var(--accent-blurple); font-size:2.2rem;"></i>
+        </div>
+        <h4 style="font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:8px;">Discord One-Click Login</h4>
+        <p
+          style="color:var(--text-secondary); font-size:0.85rem; line-height:1.5; max-width:340px; margin:0 auto 18px;">
+          Authenticate directly with your Discord account. Generates your dedicated multi-chain wallet and connects your
+          identity automatically.
+        </p>
+
+        <a href="/api/auth/discord/login" class="btn-action primary"
+          style="width:100%; justify-content:center; padding:14px; font-size:0.98rem; font-weight:700; background:linear-gradient(135deg, #5865F2, #4752c4); text-decoration:none; display:flex; align-items:center; gap:10px; box-shadow: 0 4px 18px rgba(88,101,242,0.35);">
+          <i class="fa-brands fa-discord" style="font-size:1.3rem;"></i> Login with Discord
+        </a>
+
+        <div
+          style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; font-size:0.78rem; color:var(--text-muted); display:flex; flex-direction:column; gap:6px; margin-top:18px; text-align:left;">
+          <div><i class="fa-solid fa-check" style="color:var(--accent-emerald); margin-right:6px;"></i> Official Discord
+            OAuth2 Authorization</div>
+          <div><i class="fa-solid fa-check" style="color:var(--accent-emerald); margin-right:6px;"></i> Automated
+            dedicated deposit addresses generated</div>
+          <div><i class="fa-solid fa-check" style="color:var(--accent-emerald); margin-right:6px;"></i> Zero manual hold
+            on transfers</div>
+        </div>
+      </div>
+
+      <!-- TAB 4: PIN / PASSCODE -->
+      <div id="authTabPin" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">User ID, Username or Email</label>
+          <input type="text" class="form-input" id="pinIdentifierInput" placeholder="e.g. username or Discord ID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security PIN or Secret Key</label>
+          <input type="password" maxlength="48" class="form-input" id="pinSecurityInput"
+            placeholder="Enter PIN (e.g. 123456)">
+        </div>
+        <button class="btn-action primary"
+          style="width:100%; justify-content:center; padding:13px; font-size:0.95rem; margin-top:6px;"
+          onclick="submitPasscodeLogin()">
+          <i class="fa-solid fa-key"></i> Authenticate with PIN
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. DEPOSIT MODAL (REAL BLOCKCHAIN CONFIRMATIONS ONLY - NO TESTING BALANCE) -->
+  <div class="modal-backdrop" id="depositModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img id="depCoinIconImg" src="" style="width:28px; height:28px; object-fit:contain; border-radius:50%;"
+            alt="Coin">
+          <h3 class="modal-title">Deposit Cryptocurrency</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('depositModal')">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Cryptocurrency</label>
+        <select class="form-select" id="depCoinSelect" onchange="handleDepositCoinChange()">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Deposit Network</label>
+        <select class="form-select" id="depNetworkSelect" onchange="updateDepositAddressDisplay()">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <div style="text-align:center; margin:16px 0;">
+        <div
+          style="background:#fff; padding:12px; border-radius:12px; width:160px; height:160px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center;">
+          <img id="depQrImage" src="" alt="Deposit QR Code" style="width:100%; height:100%;">
+        </div>
+        <div style="font-size:0.78rem; color:var(--text-muted);">Scan QR Code with your crypto wallet app</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Dedicated Deposit Address</label>
+        <div
+          style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 14px; font-family:var(--font-mono); font-size:0.82rem; color:var(--accent-cyan); word-break:break-all; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <span id="depAddressText">Generating...</span>
+          <button class="btn-action" style="padding:4px 10px; font-size:0.75rem;" onclick="copyDepositAddress()"><i
+              class="fa-regular fa-copy"></i> Copy</button>
+        </div>
+      </div>
+
+      <div
+        style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:0.8rem; color:var(--accent-amber);">
+        <i class="fa-solid fa-triangle-exclamation"></i> Send only to this address. Minimum deposit: <strong
+          id="depMinText">0.01 LTC</strong>.
+      </div>
+
+      <!-- Real-Time Automated Blockchain Deposit Tracker -->
+      <div
+        style="background:linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(6,182,212,0.1) 100%); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:18px; margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-weight:800; font-size:0.92rem; color:#fff; display:flex; align-items:center; gap:8px;">
+            <span
+              style="width:10px; height:10px; border-radius:50%; background:var(--accent-emerald); display:inline-block; box-shadow:0 0 10px var(--accent-emerald); animation: pulse 1.8s infinite;"></span>
+            Automatic Deposit Tracker Active
+          </span>
+          <span class="brand-badge"
+            style="color:var(--accent-emerald); border-color:var(--accent-emerald); background:rgba(16,185,129,0.15);">LIVE
+            LISTENER</span>
+        </div>
+        <div style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5; margin-bottom:14px;">
+          Send funds to your personal deposit address above from any external wallet, exchange, or platform member.
+          Deposits are tracked automatically in real time and credited directly to your balance upon blockchain network
+          broadcast.
+        </div>
+
+        <div
+          style="display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(0,0,0,0.25); border-radius:10px; padding:10px 14px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text-muted);">
+            <i class="fa-solid fa-satellite-dish fa-beat" style="color:var(--accent-cyan); font-size:0.85rem;"></i>
+            <span id="depositStatusText">Listening on network for incoming transfers...</span>
+          </div>
+          <button class="btn-action" style="padding:6px 14px; font-size:0.78rem; gap:6px;"
+            onclick="triggerManualDepositScan()" id="depScanBtn">
+            <i class="fa-solid fa-arrows-rotate" id="depScanIcon"></i> Check Network Now
+          </button>
+        </div>
+
+        <div id="depRecentNotice" style="display:none; font-size:0.8rem; color:var(--accent-emerald); font-weight:600;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. WITHDRAW MODAL -->
+  <div class="modal-backdrop" id="withdrawModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img id="withCoinIconImg" src="" style="width:28px; height:28px; object-fit:contain; border-radius:50%;"
+            alt="Coin">
+          <h3 class="modal-title">Instant Auto-Withdrawal</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('withdrawModal')">&times;</button>
+      </div>
+
+      <div
+        style="background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.3); border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.82rem; color:var(--accent-cyan); display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Automated execution. Transactions broadcast directly to the blockchain network with no verification
+          delay.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Cryptocurrency</label>
+        <select class="form-select" id="withCoinSelect" onchange="handleWithdrawCoinChange()">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Transfer Network</label>
+        <select class="form-select" id="withNetworkSelect">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">Destination Address</label>
+          <span style="font-size:0.75rem; color:var(--text-muted);" id="withAddrHint">Enter valid destination
+            address</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" class="form-input" id="withDestination" placeholder="Paste receiving wallet address">
+          <button class="btn-action" style="padding:0 14px; font-size:0.8rem;" type="button"
+            onclick="pasteWithdrawAddress()">
+            <i class="fa-regular fa-paste"></i> Paste
+          </button>
+        </div>
+      </div>
+
+      <!-- WebWallet Dual Direct Input (USD / Crypto) -->
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">Withdrawal Amount</label>
+          <span style="font-size:0.8rem; color:var(--text-secondary);">
+            Available: <strong id="withAvailBal" style="color:var(--accent-cyan); cursor:pointer;"
+              onclick="setWithdrawPercentage(100)">0.00</strong>
+            <span id="withAvailUsd" style="color:var(--text-muted); font-size:0.75rem;">($0.00 USD)</span>
+          </span>
+        </div>
+
+        <div class="cw-amount-box">
+          <div class="cw-amount-row">
+            <div class="cw-input-col">
+              <div class="cw-input-label">
+                <span>Amount in USD</span>
+                <span style="color:var(--accent-cyan); font-family:var(--font-mono); font-weight:700;">$ USD</span>
+              </div>
+              <div class="cw-input-wrap">
+                <span class="cw-input-prefix">$</span>
+                <input type="number" step="any" class="cw-input-box with-prefix" id="withAmountUsd" placeholder="5.50"
+                  oninput="syncWithdrawInput('usd')">
+              </div>
+            </div>
+
+            <div class="cw-sync-divider">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            </div>
+
+            <div class="cw-input-col">
+              <div class="cw-input-label">
+                <span>Crypto Amount</span>
+                <span class="withCoinSymbolText"
+                  style="color:var(--accent-purple); font-family:var(--font-mono); font-weight:700;">LTC</span>
+              </div>
+              <div class="cw-input-wrap">
+                <input type="number" step="any" class="cw-input-box with-suffix" id="withAmountCrypto"
+                  placeholder="0.00" oninput="syncWithdrawInput('crypto')">
+                <span class="cw-input-suffix withCoinSymbolText">LTC</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick percentage shortcuts & Quick USD chips -->
+          <div class="cw-quick-bar">
+            <div class="cw-pill-group">
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawPercentage(25)">25%</button>
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawPercentage(50)">50%</button>
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawPercentage(75)">75%</button>
+              <button type="button" class="cw-pill-btn max-btn" onclick="setWithdrawPercentage(100)">MAX</button>
+            </div>
+            <div class="cw-pill-group">
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawUsd(5)">+$5</button>
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawUsd(10)">+$10</button>
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawUsd(25)">+$25</button>
+              <button type="button" class="cw-pill-btn" onclick="setWithdrawUsd(50)">+$50</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WebWallet Live Fee & Settlement Summary Card -->
+      <div class="cw-fee-card">
+        <div class="cw-fee-row">
+          <span class="cw-fee-label"><i class="fa-solid fa-gas-pump" style="color:var(--accent-amber);"></i> Network Gas
+            Fee:</span>
+          <span class="cw-fee-val" id="withFeeDisplay">0.001000 LTC (~$0.07)</span>
+        </div>
+        <div class="cw-fee-row">
+          <span class="cw-fee-label"><i class="fa-solid fa-server" style="color:var(--accent-cyan);"></i> WebWallet
+            Service Fee:</span>
+          <span class="cw-fee-val" style="color:var(--accent-cyan); font-weight:700;">$0.02 USD</span>
+        </div>
+        <div class="cw-fee-row">
+          <span class="cw-fee-label"><i class="fa-solid fa-vault" style="color:var(--accent-purple);"></i> Platform Tax
+            (&ge; $100):</span>
+          <span class="cw-fee-val" id="withTaxDisplay">$0.00 USD</span>
+        </div>
+        <div class="cw-fee-row" style="font-size:0.75rem; color:var(--text-muted);">
+          <span><i class="fa-solid fa-clock" style="color:var(--accent-emerald);"></i> Estimated Broadcast Speed:</span>
+          <span style="color:var(--accent-emerald); font-weight:700;">Instant (~2.5 mins on-chain)</span>
+        </div>
+        <div class="cw-fee-divider"></div>
+        <div class="cw-fee-row" style="margin-bottom:0;">
+          <span style="color:var(--text-main); font-weight:800; font-size:0.95rem;">You Will Receive:</span>
+          <span class="cw-receive-val" id="withReceiveDisplay">0.00 LTC ($0.00)</span>
+        </div>
+      </div>
+
+      <button class="btn-action primary"
+        style="width:100%; justify-content:center; padding:14px; background:var(--grad-primary);"
+        onclick="executeWithdrawal()">
+        <i class="fa-solid fa-paper-plane"></i> Auto Withdraw Now (Instant)
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. TIP / P2P TRANSFER MODAL -->
+  <div class="modal-backdrop" id="tipModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img id="tipCoinIconImg" src="" style="width:28px; height:28px; object-fit:contain; border-radius:50%;"
+            alt="Coin">
+          <h3 class="modal-title">Send Internal P2P Tip</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('tipModal')">&times;</button>
+      </div>
+
+      <div
+        style="background:rgba(88, 101, 242, 0.12); border:1px solid rgba(88, 101, 242, 0.3); border-radius:10px; padding:12px; margin-bottom:18px; font-size:0.83rem;">
+        <div
+          style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-weight:700; color:var(--accent-cyan);">
+          <i class="fa-solid fa-bolt"></i> WebWallet Internal Transfer
+        </div>
+        <div style="color:var(--text-secondary); font-size:0.8rem;">
+          Fee: <strong>$0.01 USD</strong> network fee for WebWallet users. Large transfers (&ge; $100) include
+          progressive platform tax routed to treasury (<span
+            style="color:var(--accent-purple); font-weight:700;">SpideyDev</span>).
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Recipient (Discord ID, Username, or Email)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" class="form-input" id="tipRecipientInput"
+            placeholder="e.g. 1523293430858383441 or SpideyDev">
+          <button class="btn-action" style="padding:0 12px; font-size:0.8rem;" type="button"
+            onclick="pasteTipRecipient()">
+            <i class="fa-regular fa-paste"></i> Paste
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Cryptocurrency</label>
+        <select class="form-select" id="tipCoinSelect" onchange="handleTipCoinChange()">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <!-- WebWallet Dual Direct Input for Tip (USD / Crypto) -->
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">Transfer Amount</label>
+          <span style="font-size:0.8rem; color:var(--text-secondary);">
+            Available: <strong id="tipAvailBal" style="color:var(--accent-cyan); cursor:pointer;"
+              onclick="setTipPercentage(100)">0.00</strong>
+            <span id="tipAvailUsd" style="color:var(--text-muted); font-size:0.75rem;">($0.00 USD)</span>
+          </span>
+        </div>
+
+        <div class="cw-amount-box">
+          <div class="cw-amount-row">
+            <div class="cw-input-col">
+              <div class="cw-input-label">
+                <span>Amount in USD</span>
+                <span style="color:var(--accent-cyan); font-family:var(--font-mono); font-weight:700;">$ USD</span>
+              </div>
+              <div class="cw-input-wrap">
+                <span class="cw-input-prefix">$</span>
+                <input type="number" step="any" class="cw-input-box with-prefix" id="tipAmountUsd" placeholder="5.50"
+                  oninput="syncTipInput('usd')">
+              </div>
+            </div>
+
+            <div class="cw-sync-divider">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            </div>
+
+            <div class="cw-input-col">
+              <div class="cw-input-label">
+                <span>Crypto Amount</span>
+                <span class="tipCoinSymbolText"
+                  style="color:var(--accent-purple); font-family:var(--font-mono); font-weight:700;">LTC</span>
+              </div>
+              <div class="cw-input-wrap">
+                <input type="number" step="any" class="cw-input-box with-suffix" id="tipAmountCrypto" placeholder="0.00"
+                  oninput="syncTipInput('crypto')">
+                <span class="cw-input-suffix tipCoinSymbolText">LTC</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick percentage shortcuts & Quick USD chips -->
+          <div class="cw-quick-bar">
+            <div class="cw-pill-group">
+              <button type="button" class="cw-pill-btn" onclick="setTipPercentage(25)">25%</button>
+              <button type="button" class="cw-pill-btn" onclick="setTipPercentage(50)">50%</button>
+              <button type="button" class="cw-pill-btn" onclick="setTipPercentage(75)">75%</button>
+              <button type="button" class="cw-pill-btn max-btn" onclick="setTipPercentage(100)">MAX</button>
+            </div>
+            <div class="cw-pill-group">
+              <button type="button" class="cw-pill-btn" onclick="setTipUsd(1)">+$1</button>
+              <button type="button" class="cw-pill-btn" onclick="setTipUsd(5)">+$5</button>
+              <button type="button" class="cw-pill-btn" onclick="setTipUsd(10)">+$10</button>
+              <button type="button" class="cw-pill-btn" onclick="setTipUsd(25)">+$25</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Memo / Note (Optional)</label>
+        <input type="text" class="form-input" id="tipMemo" placeholder="e.g. Thanks for the collaboration! 🔥">
+      </div>
+
+      <!-- Transfer Summary Card -->
+      <div class="cw-fee-card" style="margin-bottom:18px;">
+        <div class="cw-fee-row">
+          <span class="cw-fee-label"><i class="fa-solid fa-bolt" style="color:var(--accent-cyan);"></i> Internal
+            Transfer Fee:</span>
+          <span class="cw-fee-val" style="color:var(--accent-cyan); font-weight:700;">$0.01 USD</span>
+        </div>
+        <div class="cw-fee-row">
+          <span class="cw-fee-label"><i class="fa-solid fa-vault" style="color:var(--accent-purple);"></i> Platform Tax
+            (&ge; $100):</span>
+          <span class="cw-fee-val" id="tipTaxDisplay">$0.00 USD</span>
+        </div>
+        <div class="cw-fee-divider"></div>
+        <div class="cw-fee-row" style="margin-bottom:0;">
+          <span style="color:var(--text-main); font-weight:800; font-size:0.95rem;">Total Delivered to Recipient:</span>
+          <span class="cw-receive-val" id="tipTotalSendDisplay">0.00 LTC ($0.00)</span>
+        </div>
+      </div>
+
+      <button class="btn-action primary"
+        style="width:100%; justify-content:center; padding:14px; background:linear-gradient(135deg, #5865F2, #4752c4);"
+        onclick="executeTip()">
+        <i class="fa-solid fa-bolt"></i> Send Transfer ($0.01 WebWallet Fee)
+      </button>
+    </div>
+  </div>
+
+  <!-- 5. SWAP MODAL -->
+  <div class="modal-backdrop" id="swapModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-arrows-rotate"
+            style="color:var(--accent-purple); margin-right:8px;"></i> Automated Swap Engine</h3>
+        <button class="modal-close-btn" onclick="closeModal('swapModal')">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">You Pay</label>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+          <input type="number" step="any" class="form-input" id="swapFromAmount" placeholder="0.00"
+            oninput="calculateSwap()">
+          <select class="form-select" id="swapFromCoin" onchange="calculateSwap()"></select>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin:-6px 0 14px;">
+        <button onclick="flipSwap()"
+          style="background:var(--bg-input); border:1px solid var(--border-subtle); color:var(--accent-purple); width:36px; height:36px; border-radius:50%; cursor:pointer;">
+          <i class="fa-solid fa-arrows-up-down"></i>
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">You Receive (Estimated)</label>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+          <input type="text" class="form-input" id="swapToAmount" placeholder="0.00" readonly
+            style="color:var(--accent-emerald); font-weight:700;">
+          <select class="form-select" id="swapToCoin" onchange="calculateSwap()"></select>
+        </div>
+      </div>
+
+      <div
+        style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; margin-bottom:20px; font-size:0.82rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span style="color:var(--text-muted);">Live Exchange Rate:</span>
+          <span style="color:var(--text-secondary); font-family:var(--font-mono); font-weight:700;" id="swapRateText">1
+            BTC = ... ETH</span>
+        </div>
+        <div
+          style="display:flex; justify-content:space-between; border-top:1px solid var(--border-subtle); padding-top:6px;">
+          <span style="color:var(--text-muted);">Swap Platform Fee:</span>
+          <span style="color:var(--accent-cyan); font-family:var(--font-mono); font-weight:700;">$0.01 USD (Auto-routed
+            to Treasury)</span>
+        </div>
+      </div>
+
+      <button class="btn-action primary" style="width:100%; justify-content:center; padding:14px;"
+        onclick="executeSwap()">
+        <i class="fa-solid fa-arrows-rotate"></i> Swap Tokens
+      </button>
+    </div>
+  </div>
+
+  <!-- 6. ADMIN USER BALANCE ADJUSTMENT MODAL -->
+  <div class="modal-backdrop" id="adminAdjustModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-coins" style="color:var(--accent-cyan); margin-right:8px;"></i>
+          Adjust User Balance</h3>
+        <button class="modal-close-btn" onclick="closeModal('adminAdjustModal')">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target User</label>
+        <input type="text" class="form-input" id="adjTargetUser" readonly style="background:rgba(255,255,255,0.03);">
+        <input type="hidden" id="adjTargetUserId">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Cryptocurrency</label>
+        <select class="form-select" id="adjCoinSelect">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Action</label>
+        <select class="form-select" id="adjActionSelect">
+          <option value="CREDIT">CREDIT (+) Add to Balance</option>
+          <option value="DEBIT">DEBIT (-) Deduct from Balance</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Amount</label>
+        <input type="number" step="any" class="form-input" id="adjAmount" placeholder="Amount (e.g. 1.5)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reason / Audit Memo</label>
+        <input type="text" class="form-input" id="adjReason" placeholder="e.g. Deposit confirmation / Reward">
+      </div>
+
+      <button class="btn-action primary" style="width:100%; justify-content:center; padding:13px;"
+        onclick="executeAdminBalanceAdjustment()">
+        Apply Balance Adjustment
+      </button>
+    </div>
+  </div>
+
+  <!-- 7. TRANSACTION RECEIPT & AUDIT MODAL (GIVES FULL INFO INCL. TXID) -->
+  <div class="modal-backdrop" id="txReceiptModal">
+    <div class="modal-container" style="max-width:540px; text-align:center;">
+      <div style="margin-bottom:16px;">
+        <div id="receiptIconBox"
+          style="width:64px; height:64px; border-radius:50%; background:rgba(16,185,129,0.15); border:2px solid var(--accent-emerald); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-emerald); font-size:1.8rem; margin-bottom:12px; box-shadow:0 0 25px rgba(16,185,129,0.35);">
+          <i class="fa-solid fa-check" id="receiptStatusIcon"></i>
+        </div>
+        <h3 style="font-size:1.35rem; font-weight:800; margin-bottom:4px;" id="receiptTitle">Transaction Successful</h3>
+        <div style="font-size:0.85rem; color:var(--text-secondary);" id="receiptSubtitle">Broadcasted securely across
+          blockchain nodes</div>
+      </div>
+
+      <div
+        style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:14px; padding:18px; margin-bottom:20px; text-align:left;">
+        <div
+          style="text-align:center; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border-subtle);">
+          <div
+            style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:700;">
+            Transaction Amount</div>
+          <div
+            style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-cyan); display:flex; align-items:center; justify-content:center; gap:8px;"
+            id="receiptAmountDisplay">
+            0.00
+          </div>
+          <div style="font-size:0.85rem; color:var(--text-muted);" id="receiptUsdDisplay">≈ $0.00 USD</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Status:</span>
+            <span class="brand-badge"
+              style="color:var(--accent-emerald); border-color:var(--accent-emerald); background:rgba(16,185,129,0.1);"
+              id="receiptStatus">COMPLETED</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Operation:</span>
+            <span style="font-weight:700; color:var(--text-main);" id="receiptType">Transfer</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Network:</span>
+            <span style="font-weight:700; color:var(--text-main);" id="receiptNetwork">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Recipient / Destination:</span>
+            <span
+              style="font-family:var(--font-mono); font-weight:600; color:var(--accent-purple); word-break:break-all; text-align:right; max-width:240px;"
+              id="receiptRecipient">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Network &amp; Platform Fee:</span>
+            <span style="font-family:var(--font-mono); font-weight:700; color:var(--text-secondary);"
+              id="receiptFee">-</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Confirmations:</span>
+            <span style="font-family:var(--font-mono); font-weight:700; color:var(--accent-emerald);"
+              id="receiptConfirmations">12/12 (Verified)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--text-muted);">Timestamp:</span>
+            <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-secondary);"
+              id="receiptTimestamp">-</span>
+          </div>
+        </div>
+
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border-subtle);">
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; font-weight:700;">TRANSACTION HASH
+            / TXID</div>
+          <div
+            style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.35); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 12px; gap:8px;">
+            <span
+              style="font-family:var(--font-mono); font-size:0.78rem; color:var(--accent-cyan); word-break:break-all;"
+              id="receiptTxidText">-</span>
+            <button class="btn-action" style="padding:4px 10px; font-size:0.75rem; flex-shrink:0;"
+              onclick="copyReceiptTxid()"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn-action" style="flex:1; justify-content:center; padding:12px;"
+          onclick="closeModal('txReceiptModal')">Done</button>
+        <button class="btn-action primary" style="flex:1; justify-content:center; padding:12px;"
+          onclick="viewTxInExplorer()">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> View Explorer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Backdrop for Mobile Drawer -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-bar" id="mobileBottomBar" style="display:none;">
+    <div class="m-nav-item active" onclick="switchView('overview')" id="mNav-overview">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Home</span>
+    </div>
+    <div class="m-nav-item" onclick="switchView('my-wallet')" id="mNav-my-wallet">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Wallets</span>
+    </div>
+    <div class="m-nav-item action" onclick="openModal('depositModal')">
+      <div class="m-nav-action-btn">
+        <i class="fa-solid fa-circle-down"></i>
+      </div>
+      <span>Deposit</span>
+    </div>
+    <div class="m-nav-item" onclick="switchView('transactions')" id="mNav-transactions">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Activity</span>
+    </div>
+    <div class="m-nav-item" onclick="switchView('downloads')" id="mNav-downloads">
+      <i class="fa-solid fa-download"></i>
+      <span>Get App</span>
+    </div>
+  </nav>
+
+  <!-- Toast Box -->
+  <div id="toastBox" class="toast-box"></div>
+
+  <style>
+    @media (min-width: 769px) {
+
+      #mobileBottomBar,
+      .mobile-bottom-bar {
+        display: none !important;
+        position: absolute !important;
+        left: -99999px !important;
+        top: -99999px !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+    }
+  </style>
+
+  <!-- Client JavaScript -->
+  <script src="/static/js/webwallet.js?v=2.7.7"></script>
+</body>
+
+</html>
