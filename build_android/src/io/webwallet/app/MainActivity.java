@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         mWebView.setWebViewClient(new WebViewClient());
-        mWebView.loadUrl("http://10.0.2.2:8080");
+        mWebView.loadUrl("https://webwallet-jqgx.onrender.com/app");
     }
 
     @Override

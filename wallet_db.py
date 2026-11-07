@@ -851,9 +851,20 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
         """, (user_id, coin, network))
         wallet = await cur.fetchone()
 
-        if not wallet or wallet["balance"] < total_deduct:
+        # Cwallet-style Auto-Gas Swapper:
+        # All blockchain network fees (TRC20, ERC20, BEP20, Solana, etc.) are paid directly in the withdrawn token (e.g. USDT)
+        # Users NEVER need native gas (TRX, ETH, or BNB) in their wallet!
+        send_amount = amount
+        if wallet["balance"] >= total_deduct:
+            actual_deduct = total_deduct
+            send_amount = amount
+        elif wallet["balance"] >= amount and (amount - total_fee) > 0:
+            # Auto-deduct fee from withdrawal amount (Cwallet MAX style)
+            actual_deduct = amount
+            send_amount = round(amount - total_fee, 8)
+        else:
             await conn.rollback()
-            return {"success": False, "error": f"Insufficient wallet balance. Total required: {round(total_deduct, 6)} {coin} (includes $0.02 platform fee & tax)"}
+            return {"success": False, "error": f"Insufficient wallet balance. Total required: {round(total_deduct, 6)} {coin} (includes {round(total_fee, 4)} {coin} network gas & platform fee)."}
 
         actual_network = wallet["network"]
 
@@ -861,7 +872,7 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
         await conn.execute("""
             UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
-        """, (total_deduct, wallet["id"]))
+        """, (actual_deduct, wallet["id"]))
 
         # Credit SpideyDev with platform fee and tax
         await credit_owner_revenue(conn, tx_hash, user_id, "WITHDRAWAL_FEE", coin, actual_network, platform_fee_coin, platform_fee_usd)
@@ -883,7 +894,7 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
                     ON CONFLICT(user_id, coin, network) DO UPDATE SET
                     balance = balance + excluded.balance,
                     updated_at = CURRENT_TIMESTAMP
-                """, (dest_uid, coin, dest_wallet["network"], amount, destination))
+                """, (dest_uid, coin, dest_wallet["network"], send_amount, destination))
 
                 # Log incoming deposit for recipient
                 memo_in = f"Inflow from WebWallet User #{user_id}"
@@ -891,12 +902,12 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
                     INSERT INTO transactions (
                         tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, counterparty_id, counterparty_name, memo, status, confirmations, required_confirmations
                     ) VALUES (?, ?, 'DEPOSIT', ?, ?, ?, ?, 0.0, ?, ?, ?, ?, 'COMPLETED', 12, 12)
-                """, (f"{tx_hash}_in", dest_uid, coin, dest_wallet["network"], amount, amount_usd, destination, user_id, f"User #{user_id}", memo_in))
+                """, (f"{tx_hash}_in", dest_uid, coin, dest_wallet["network"], send_amount, round(send_amount * price_usd, 2), destination, user_id, f"User #{user_id}", memo_in))
         else:
             # External real on-chain automated payout via NOWPayments
             try:
                 import nowpayments
-                payout_res = await nowpayments.send_automated_payout(destination, amount, coin, actual_network)
+                payout_res = await nowpayments.send_automated_payout(destination, send_amount, coin, actual_network)
                 if payout_res.get("success"):
                     tx_hash = payout_res.get("tx_hash") or tx_hash
                     logger.info(f"NOWPayments Automated Payout dispatched: {payout_res}")
@@ -909,7 +920,7 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
             INSERT INTO transactions (
                 tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, status, confirmations, required_confirmations
             ) VALUES (?, ?, 'WITHDRAW', ?, ?, ?, ?, ?, ?, ?, 12, 12)
-        """, (tx_hash, user_id, coin, actual_network, amount, amount_usd, total_fee, destination, status))
+        """, (tx_hash, user_id, coin, actual_network, send_amount, round(send_amount * price_usd, 2), total_fee, destination, status))
 
         await conn.commit()
         return {
@@ -917,8 +928,8 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
             "tx_hash": tx_hash,
             "coin": coin,
             "network": actual_network,
-            "amount": amount,
-            "amount_usd": amount_usd,
+            "amount": send_amount,
+            "amount_usd": round(send_amount * price_usd, 2),
             "destination": destination,
             "fee": total_fee,
             "platform_fee_usd": platform_fee_usd,
