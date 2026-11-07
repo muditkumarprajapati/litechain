@@ -1924,27 +1924,39 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">You Pay</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">You Pay</label>
+          <div style="font-size:0.75rem; color:var(--text-muted); cursor:pointer;" onclick="setSwapMaxAmount()">
+            Available: <strong id="swapAvailableBal" style="color:var(--accent-cyan); font-family:var(--font-mono);">0.00</strong>
+            <span class="brand-badge" style="padding:1px 6px; font-size:0.65rem; margin-left:4px; color:var(--accent-cyan); border-color:var(--accent-cyan); cursor:pointer;">MAX</span>
+          </div>
+        </div>
         <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
           <input type="number" step="any" class="form-input" id="swapFromAmount" placeholder="0.00"
             oninput="calculateSwap()">
-          <select class="form-select" id="swapFromCoin" onchange="calculateSwap()"></select>
+          <select class="form-select" id="swapFromCoin" onchange="handleSwapCoinChange('from')"></select>
         </div>
       </div>
 
       <div style="text-align:center; margin:-6px 0 14px;">
-        <button onclick="flipSwap()"
-          style="background:var(--bg-input); border:1px solid var(--border-subtle); color:var(--accent-purple); width:36px; height:36px; border-radius:50%; cursor:pointer;">
+        <button onclick="flipSwap()" title="Switch From and To coins"
+          style="background:var(--bg-input); border:1px solid var(--border-subtle); color:var(--accent-purple); width:36px; height:36px; border-radius:50%; cursor:pointer; transition:transform 0.2s;"
+          onmouseenter="this.style.transform='rotate(180deg)'" onmouseleave="this.style.transform='rotate(0deg)'">
           <i class="fa-solid fa-arrows-up-down"></i>
         </button>
       </div>
 
       <div class="form-group">
-        <label class="form-label">You Receive (Estimated)</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">You Receive (Estimated)</label>
+          <div style="font-size:0.75rem; color:var(--text-muted);">
+            Holding: <strong id="swapToBal" style="color:var(--accent-emerald); font-family:var(--font-mono);">0.00</strong>
+          </div>
+        </div>
         <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
           <input type="text" class="form-input" id="swapToAmount" placeholder="0.00" readonly
             style="color:var(--accent-emerald); font-weight:700;">
-          <select class="form-select" id="swapToCoin" onchange="calculateSwap()"></select>
+          <select class="form-select" id="swapToCoin" onchange="handleSwapCoinChange('to')"></select>
         </div>
       </div>
 

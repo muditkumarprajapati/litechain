@@ -1946,11 +1946,14 @@ function populateModalSelectors(coins) {
 
   ['depCoinSelect', 'withCoinSelect', 'tipCoinSelect', 'swapFromCoin', 'swapToCoin', 'adjCoinSelect'].forEach(id => {
     const el = document.getElementById(id);
-    if (el && !el.children.length) el.innerHTML = optHtml;
+    if (el && !el.children.length) {
+      el.innerHTML = optHtml;
+      // Only default swap destination on initial mount
+      if (id === 'swapToCoin' && el.options.length > 1) {
+        el.selectedIndex = 1;
+      }
+    }
   });
-
-  const swapTo = document.getElementById('swapToCoin');
-  if (swapTo && swapTo.options.length > 1) swapTo.selectedIndex = 1;
 }
 
 function openDepositFor(coin) {
@@ -2463,18 +2466,92 @@ async function executeTip() {
   }
 }
 
+function openSwapFor(fromCoin, toCoin = null) {
+  openModal('swapModal');
+  const fromEl = document.getElementById('swapFromCoin');
+  const toEl = document.getElementById('swapToCoin');
+  if (fromEl && fromCoin) {
+    fromEl.value = fromCoin;
+  }
+  if (toEl) {
+    if (toCoin && toCoin !== fromCoin) {
+      toEl.value = toCoin;
+    } else if (toEl.value === fromEl.value) {
+      const alt = Array.from(toEl.options).find(o => o.value !== fromEl.value);
+      if (alt) toEl.value = alt.value;
+    }
+  }
+  updateSwapBalances();
+  calculateSwap();
+}
+
+function handleSwapCoinChange(changedField) {
+  const fromEl = document.getElementById('swapFromCoin');
+  const toEl = document.getElementById('swapToCoin');
+  if (!fromEl || !toEl) return;
+
+  // Prevent from and to being identical
+  if (fromEl.value === toEl.value) {
+    if (changedField === 'from') {
+      const alt = Array.from(toEl.options).find(o => o.value !== fromEl.value);
+      if (alt) toEl.value = alt.value;
+    } else {
+      const alt = Array.from(fromEl.options).find(o => o.value !== toEl.value);
+      if (alt) fromEl.value = alt.value;
+    }
+  }
+
+  updateSwapBalances();
+  calculateSwap();
+}
+
+function updateSwapBalances() {
+  const fromCoin = document.getElementById('swapFromCoin')?.value;
+  const toCoin = document.getElementById('swapToCoin')?.value;
+
+  const assetFrom = app.portfolio?.assets?.find(a => a.symbol === fromCoin);
+  const balFrom = assetFrom ? assetFrom.total_balance : 0;
+  const elFrom = document.getElementById('swapAvailableBal');
+  if (elFrom) elFrom.innerText = `${formatNumber(balFrom, 6)} ${fromCoin || ''}`;
+
+  const assetTo = app.portfolio?.assets?.find(a => a.symbol === toCoin);
+  const balTo = assetTo ? assetTo.total_balance : 0;
+  const elTo = document.getElementById('swapToBal');
+  if (elTo) elTo.innerText = `${formatNumber(balTo, 6)} ${toCoin || ''}`;
+}
+
+function setSwapMaxAmount() {
+  const fromCoin = document.getElementById('swapFromCoin')?.value;
+  const assetFrom = app.portfolio?.assets?.find(a => a.symbol === fromCoin);
+  const balFrom = assetFrom ? assetFrom.total_balance : 0;
+  const input = document.getElementById('swapFromAmount');
+  if (input && balFrom > 0) {
+    input.value = balFrom;
+    calculateSwap();
+  }
+}
+
 function calculateSwap() {
-  const fromCoin = document.getElementById('swapFromCoin').value;
-  const toCoin = document.getElementById('swapToCoin').value;
+  const fromEl = document.getElementById('swapFromCoin');
+  const toEl = document.getElementById('swapToCoin');
+  if (!fromEl || !toEl) return;
+
+  const fromCoin = fromEl.value;
+  const toCoin = toEl.value;
   const fromAmt = parseFloat(document.getElementById('swapFromAmount').value) || 0;
+
+  updateSwapBalances();
 
   if (!app.market) return;
   const pFrom = app.market.prices[fromCoin] || 1;
   const pTo = app.market.prices[toCoin] || 1;
 
   const rate = pFrom / (pTo || 1);
-  document.getElementById('swapRateText').innerText = `1 ${fromCoin} = ${formatNumber(rate, 6)} ${toCoin}`;
-  
+  const rateEl = document.getElementById('swapRateText');
+  if (rateEl) {
+    rateEl.innerText = `1 ${fromCoin} = ${formatNumber(rate, 6)} ${toCoin}`;
+  }
+
   if (fromAmt <= 0) {
     document.getElementById('swapToAmount').value = '0.00';
     return;
@@ -2486,11 +2563,7 @@ function calculateSwap() {
   const feeCoin = fromAmt * 0.008;
   const feeEl = document.getElementById('swapFeeText');
   if (feeEl) {
-    if (fromAmt > 0) {
-      feeEl.innerText = `0.80% (~$${formatNumber(feeUsd, 2)} / ${formatNumber(feeCoin, 6)} ${fromCoin})`;
-    } else {
-      feeEl.innerText = '0.80% (Auto-routed to Treasury)';
-    }
+    feeEl.innerText = `0.80% (~$${formatNumber(feeUsd, 2)} / ${formatNumber(feeCoin, 6)} ${fromCoin})`;
   }
 
   const netFromUsd = Math.max(0, fromAmtUsd - feeUsd);
@@ -2501,9 +2574,11 @@ function calculateSwap() {
 function flipSwap() {
   const f = document.getElementById('swapFromCoin');
   const t = document.getElementById('swapToCoin');
+  if (!f || !t) return;
   const temp = f.value;
   f.value = t.value;
   t.value = temp;
+  updateSwapBalances();
   calculateSwap();
 }
 
@@ -2511,11 +2586,6 @@ async function executeSwap() {
   const from_coin = document.getElementById('swapFromCoin').value;
   const to_coin = document.getElementById('swapToCoin').value;
   const from_amount = parseFloat(document.getElementById('swapFromAmount').value);
-
-  const assetFrom = app.portfolio?.assets.find(a => a.symbol === from_coin);
-  const from_network = assetFrom?.networks[0]?.network || "Mainnet";
-  const assetTo = app.portfolio?.assets.find(a => a.symbol === to_coin);
-  const to_network = assetTo?.networks[0]?.network || "Mainnet";
 
   if (from_coin === to_coin) {
     showToast('Cannot swap identical coins', true);
@@ -2525,6 +2595,18 @@ async function executeSwap() {
     showToast('Enter a valid amount to swap', true);
     return;
   }
+
+  const assetFrom = app.portfolio?.assets?.find(a => a.symbol === from_coin);
+  if (assetFrom && from_amount > assetFrom.total_balance) {
+    showToast(`Insufficient ${from_coin} balance. Available: ${formatNumber(assetFrom.total_balance, 6)} ${from_coin}`, true);
+    return;
+  }
+
+  const fundedNet = assetFrom?.networks?.find(n => n.balance >= from_amount);
+  const from_network = fundedNet ? fundedNet.network : (assetFrom?.networks?.find(n => n.balance > 0)?.network || assetFrom?.networks[0]?.network || "");
+
+  const assetTo = app.portfolio?.assets?.find(a => a.symbol === to_coin);
+  const to_network = assetTo?.networks[0]?.network || "";
 
   try {
     const res = await fetch('/api/wallet/swap', {
@@ -2540,25 +2622,25 @@ async function executeSwap() {
       await loadPortfolio();
       await loadTransactions();
       showTxReceipt({
-        title: "Automated Swap Executed",
+        title: "Cross-Chain Swap Executed",
         subtitle: `Swapped ${data.from_amount} ${data.from_coin} for ${formatNumber(data.to_amount, 6)} ${data.to_coin}`,
-        type: "Cross-Chain Swap",
+        type: "SWAP",
         amount: data.from_amount,
         coin: `${data.from_coin} ➔ ${data.to_coin}`,
         network: `${data.from_network || data.from_coin} ➔ ${data.to_network || data.to_coin}`,
         recipient: "WebWallet Liquidity Pool",
-        fee: `$${formatNumber(data.fee_usd, 2)} USD`,
+        fee: `$${formatNumber(data.fee_usd, 2)} USD (${formatNumber(data.fee_coin, 6)} ${data.from_coin})`,
         tx_hash: data.tx_hash,
         status: data.status || "COMPLETED",
         confirmations: "12/12 (Verified)",
         timestamp: data.timestamp || new Date().toUTCString()
       });
-      showToast(`Swapped ${from_amount} ${from_coin} ➔ ${data.to_amount} ${to_coin}! ✨`);
+      showToast(`Swapped ${from_amount} ${from_coin} ➔ ${formatNumber(data.to_amount, 6)} ${to_coin}! ✨`);
     } else {
       showToast(data.error || 'Swap failed', true);
     }
   } catch (e) {
-    showToast('Swap request error', true);
+    showToast('Network error executing swap', true);
   }
 }
 

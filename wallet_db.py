@@ -1072,13 +1072,16 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
 
         cur = await conn.execute("""
             SELECT id, network, balance FROM wallets WHERE user_id = ? AND coin = ?
-            ORDER BY (network = ?) DESC LIMIT 1
-        """, (user_id, from_coin, from_net))
+            ORDER BY (network = ?) DESC, (balance >= ?) DESC, balance DESC LIMIT 1
+        """, (user_id, from_coin, from_net, from_amount))
         wallet = await cur.fetchone()
 
         if not wallet or wallet["balance"] < from_amount:
+            cur_tot = await conn.execute("SELECT SUM(balance) as tot FROM wallets WHERE user_id = ? AND coin = ?", (user_id, from_coin))
+            tot_row = await cur_tot.fetchone()
+            tot_bal = tot_row["tot"] if tot_row and tot_row["tot"] else 0.0
             await conn.rollback()
-            return {"success": False, "error": f"Insufficient {from_coin} balance for swap"}
+            return {"success": False, "error": f"Insufficient {from_coin} balance. Available: {round(tot_bal, 6)} {from_coin}"}
 
         actual_from_net = wallet["network"]
 
@@ -1090,11 +1093,12 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
 
         # Find or use destination network
         cur_to = await conn.execute("""
-            SELECT network FROM wallets WHERE user_id = ? AND coin = ?
-            ORDER BY (network = ?) DESC LIMIT 1
+            SELECT network, deposit_address FROM wallets WHERE user_id = ? AND coin = ?
+            ORDER BY (network = ?) DESC, balance DESC LIMIT 1
         """, (user_id, to_coin, to_net))
         to_row = await cur_to.fetchone()
         actual_to_net = to_row["network"] if to_row else to_net
+        to_addr = to_row["deposit_address"] if to_row and to_row["deposit_address"] else generate_crypto_address(to_coin, user_id, actual_to_net)
 
         # Credit to_coin
         await conn.execute("""
@@ -1103,7 +1107,7 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
             ON CONFLICT(user_id, coin, network) DO UPDATE SET
             balance = balance + excluded.balance,
             updated_at = CURRENT_TIMESTAMP
-        """, (user_id, to_coin, actual_to_net, to_amount, generate_crypto_address(to_coin, user_id, actual_to_net)))
+        """, (user_id, to_coin, actual_to_net, to_amount, to_addr))
 
         # Route swap fee to SpideyDev
         await credit_owner_revenue(conn, swap_hash, user_id, "SWAP_FEE", from_coin, actual_from_net, swap_fee_coin, swap_fee_usd)
@@ -1117,12 +1121,12 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
         """, (swap_hash, user_id, from_coin, actual_from_net, to_coin, actual_to_net, from_amount, to_amount, rate, swap_fee_coin, swap_fee_usd))
 
         # Record in transactions table
-        memo = f"Swapped {from_amount} {from_coin} for {to_amount} {to_coin} (0.8% Fee: ${swap_fee_usd})"
+        memo = f"Swapped {from_amount} {from_coin} ({actual_from_net}) for {to_amount} {to_coin} ({actual_to_net})"
         await conn.execute("""
             INSERT INTO transactions (
-                tx_hash, user_id, type, coin, network, amount, amount_usd, fee, memo, status
-            ) VALUES (?, ?, 'SWAP', ?, ?, ?, ?, ?, ?, 'COMPLETED')
-        """, (swap_hash, user_id, f"{from_coin}→{to_coin}", actual_from_net, from_amount, round(from_usd, 2), swap_fee_coin, memo))
+                tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, memo, status, confirmations, required_confirmations
+            ) VALUES (?, ?, 'SWAP', ?, ?, ?, ?, ?, ?, ?, 'COMPLETED', 12, 12)
+        """, (swap_hash, user_id, f"{from_coin}→{to_coin}", f"{actual_from_net} ➔ {actual_to_net}", from_amount, round(from_usd, 2), swap_fee_coin, f"Internal Vault ({actual_to_net})", memo))
 
         await conn.commit()
         return {
