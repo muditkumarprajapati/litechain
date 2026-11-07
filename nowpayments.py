@@ -199,7 +199,7 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
     user_id = None
     async with aiosqlite.connect(DB_PATH) as conn:
         conn.row_factory = aiosqlite.Row
-        cur = await conn.execute("SELECT user_id, coin, network FROM nowpayments_deposits WHERE pay_address = ? LIMIT 1", (pay_address,))
+        cur = await conn.execute("SELECT user_id, coin, network FROM nowpayments_deposits WHERE LOWER(pay_address) = LOWER(?) OR payment_id = ? LIMIT 1", (pay_address, payment_id))
         row = await cur.fetchone()
         if row:
             user_id = row["user_id"]
@@ -221,8 +221,9 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
         # If payment status is confirmed, finished, or sending, credit the funds
         if payment_status in ["finished", "confirmed", "sending"]:
             # Check if this payment_id has already been credited
-            cur_tx = await conn.execute("SELECT id FROM transactions WHERE tx_hash = ?", (f"np_{payment_id}",))
-            if await cur_tx.fetchone():
+            cur_tx = await conn.execute("SELECT id, status FROM transactions WHERE tx_hash = ?", (f"np_{payment_id}",))
+            existing_tx = await cur_tx.fetchone()
+            if existing_tx and existing_tx["status"] == "COMPLETED":
                 return {"success": True, "already_processed": True}
 
             # Credit user wallet
@@ -234,13 +235,18 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
                 updated_at = CURRENT_TIMESTAMP
             """, (user_id, coin, network, actually_paid, pay_address))
 
-            # Record in transactions table
+            # Record or update in transactions table
             memo = f"NOWPayments Verified On-Chain Inflow ({payment_status.upper()})"
-            await conn.execute("""
-                INSERT INTO transactions (
-                    tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, memo, status, confirmations, required_confirmations
-                ) VALUES (?, ?, 'DEPOSIT', ?, ?, ?, ?, 0.0, ?, ?, 'COMPLETED', 12, 12)
-            """, (f"np_{payment_id}", user_id, coin, network, actually_paid, round(float(data.get("price_amount", 0.0)), 2), pay_address, memo))
+            if existing_tx:
+                await conn.execute("""
+                    UPDATE transactions SET status = 'COMPLETED', confirmations = 12, memo = ? WHERE id = ?
+                """, (memo, existing_tx["id"]))
+            else:
+                await conn.execute("""
+                    INSERT INTO transactions (
+                        tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, memo, status, confirmations, required_confirmations
+                    ) VALUES (?, ?, 'DEPOSIT', ?, ?, ?, ?, 0.0, ?, ?, 'COMPLETED', 12, 12)
+                """, (f"np_{payment_id}", user_id, coin, network, actually_paid, round(float(data.get("price_amount", 0.0)), 2), pay_address, memo))
 
             # Update status in nowpayments_deposits
             await conn.execute("UPDATE nowpayments_deposits SET status = ? WHERE payment_id = ?", (payment_status, payment_id))
@@ -248,6 +254,16 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
 
             logger.info(f"Successfully credited user {user_id}: {actually_paid} {coin} (Payment {payment_id})")
             return {"success": True, "credited": True, "user_id": user_id, "amount": actually_paid, "coin": coin}
+
+        elif payment_status == "confirming":
+            cur_tx = await conn.execute("SELECT id FROM transactions WHERE tx_hash = ?", (f"np_{payment_id}",))
+            if not await cur_tx.fetchone() and actually_paid > 0:
+                memo = "NOWPayments On-Chain Inflow Detected (Confirming on Blockchain)"
+                await conn.execute("""
+                    INSERT INTO transactions (
+                        tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, memo, status, confirmations, required_confirmations
+                    ) VALUES (?, ?, 'DEPOSIT', ?, ?, ?, ?, 0.0, ?, ?, 'RECEIVING', 6, 12)
+                """, (f"np_{payment_id}", user_id, coin, network, actually_paid, round(float(data.get("price_amount", 0.0)), 2), pay_address, memo))
 
         # If not finished yet, just update status
         await conn.execute("UPDATE nowpayments_deposits SET status = ? WHERE payment_id = ?", (payment_status, payment_id))

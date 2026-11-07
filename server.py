@@ -621,6 +621,7 @@ async def handle_wallet_deposit_check(request: web.Request):
         np_credited = await nowpayments.check_user_nowpayments_deposits(uid)
         if np_credited:
             result.setdefault("new_deposits", []).extend(np_credited)
+            result["new_deposits_count"] = result.get("new_deposits_count", 0) + len(np_credited)
     except Exception as e:
         logger.error(f"NOWPayments check error: {e}")
 
