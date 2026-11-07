@@ -615,6 +615,15 @@ async def handle_wallet_deposit_check(request: web.Request):
     coin = request.query.get("coin", "").upper() or None
     network = request.query.get("network", "") or None
     result = await db.check_and_credit_onchain_deposits(uid, coin_filter=coin, network_filter=network)
+    
+    # Also active poll NOWPayments API as fallback
+    try:
+        np_credited = await nowpayments.check_user_nowpayments_deposits(uid)
+        if np_credited:
+            result.setdefault("new_deposits", []).extend(np_credited)
+    except Exception as e:
+        logger.error(f"NOWPayments check error: {e}")
+
     return web.json_response(result)
 
 async def handle_nowpayments_ipn(request: web.Request):

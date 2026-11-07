@@ -254,6 +254,36 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
         await conn.commit()
         return {"success": True, "status": payment_status}
 
+async def check_user_nowpayments_deposits(user_id: int) -> list:
+    """Active poll fallback: queries NOWPayments for any active payments and credits if confirmed."""
+    credited = []
+    async with aiosqlite.connect(DB_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cur = await conn.execute("""
+            SELECT payment_id FROM nowpayments_deposits
+            WHERE user_id = ? AND status NOT IN ('finished', 'failed', 'expired')
+            ORDER BY created_at DESC LIMIT 5
+        """, (user_id,))
+        rows = await cur.fetchall()
+
+    for r in rows:
+        pid = r["payment_id"]
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"{NOWPAYMENTS_API_BASE}/payment/{pid}"
+                headers = {"x-api-key": NOWPAYMENTS_API_KEY}
+                async with session.get(url, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        st = str(data.get("payment_status", "")).lower()
+                        if st in ["finished", "confirmed", "sending"]:
+                            res = await handle_ipn_notification(data)
+                            if res.get("credited"):
+                                credited.append(res)
+        except Exception as e:
+            logger.error(f"Error active polling payment {pid}: {e}")
+    return credited
+
 async def get_payout_auth_token() -> Optional[str]:
     """Retrieve temporary Bearer JWT token from NOWPayments using merchant credentials."""
     email = os.getenv("NOWPAYMENTS_EMAIL", "")
