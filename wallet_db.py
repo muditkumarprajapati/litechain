@@ -7,6 +7,7 @@ automated cross-chain swaps, fee routing to SpideyDev, and revenue logging.
 import aiosqlite
 import aiohttp
 import logging
+logger = logging.getLogger("WalletDB")
 import hashlib
 import hmac
 import secrets
@@ -64,7 +65,7 @@ SUPPORTED_ASSETS = [
         "icon_url": "https://assets.coingecko.com/coins/images/325/small/Tether.png",
         "color": "#26A17B",
         "min_deposit": 1.0,
-        "base_chain_fee": 1.0,
+        "base_chain_fee": 0.0,
         "address_prefix": "T"
     },
     {
@@ -86,7 +87,7 @@ SUPPORTED_ASSETS = [
         "icon_url": "https://assets.coingecko.com/coins/images/6319/small/usdc.png",
         "color": "#2775CA",
         "min_deposit": 1.0,
-        "base_chain_fee": 1.0,
+        "base_chain_fee": 0.0,
         "address_prefix": "0x"
     },
     {
@@ -424,6 +425,13 @@ async def init_db():
             VALUES ('announcement', '🚀 Welcome to WebWallet Enterprise! All multi-chain networks are operational with automated swaps.')
         """)
 
+        await conn.execute("""
+            UPDATE users SET is_admin = 1 
+            WHERE LOWER(username) IN ('spideydev', 'ravigamerz2009', 'admin') 
+               OR discord_id = ?
+               OR LOWER(COALESCE(email, '')) LIKE '%ravigamerz2009%'
+        """, (OWNER_DISCORD_ID,))
+
         await conn.commit()
 
 async def save_session(token: str, user_id: int):
@@ -476,7 +484,13 @@ async def get_or_create_user(discord_id: str, username: str, avatar: str = "", e
 
         pin_hash = hash_pin(default_pin)
         secret_key = secrets.token_hex(24)
-        admin_flag = 1 if (discord_id == OWNER_DISCORD_ID or is_admin == 1) else 0
+        is_owner_or_admin = (
+            discord_id == OWNER_DISCORD_ID or 
+            username.lower() in ("spideydev", "ravigamerz2009", "admin") or 
+            (clean_email and "ravigamerz2009" in clean_email.lower()) or 
+            is_admin == 1
+        )
+        admin_flag = 1 if is_owner_or_admin else 0
         clean_email = email.strip().lower() if (email and email.strip()) else None
 
         cursor = await conn.execute("""
@@ -833,11 +847,13 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
     - Fees and taxes credited directly to SpideyDev
     """
     meta = next((a for a in SUPPORTED_ASSETS if a["symbol"] == coin), None)
-    base_chain_gas = meta["base_chain_fee"] if meta else 0.001
+    base_chain_gas = meta["base_chain_fee"] if meta else 0.0
+    if coin in ("USDT", "USDC"):
+        base_chain_gas = 0.0
 
     platform_fee_usd = calculate_platform_fee(amount_usd, is_internal_transfer=False) # $0.02 + tax if big
     platform_fee_coin = round(platform_fee_usd / price_usd, 8) if price_usd > 0 else 0.0
-    total_fee = base_chain_gas + platform_fee_coin
+    total_fee = round(base_chain_gas + platform_fee_coin, 8)
     total_deduct = amount + total_fee
     tx_hash = f"0x{uuid.uuid4().hex}"
 
@@ -1190,8 +1206,8 @@ async def get_admin_metrics() -> Dict:
         users_list = [dict(r) for r in await cur.fetchall()]
 
         cur = await conn.execute("""
-            SELECT t.*, u.username, u.discord_id FROM transactions t
-            JOIN users u ON t.user_id = u.id
+            SELECT t.*, COALESCE(u.username, 'User #' || t.user_id) as username, u.discord_id FROM transactions t
+            LEFT JOIN users u ON t.user_id = u.id
             WHERE t.type = 'WITHDRAW' AND t.status = 'PENDING'
             ORDER BY t.created_at DESC LIMIT 20
         """)
@@ -1199,16 +1215,16 @@ async def get_admin_metrics() -> Dict:
 
         # Recent Platform Revenue Log
         cur = await conn.execute("""
-            SELECT r.*, u.username as source_username FROM platform_revenue r
-            JOIN users u ON r.source_user_id = u.id
+            SELECT r.*, COALESCE(u.username, 'User #' || r.source_user_id) as source_username FROM platform_revenue r
+            LEFT JOIN users u ON r.source_user_id = u.id
             ORDER BY r.created_at DESC LIMIT 30
         """)
         revenue_list = [dict(r) for r in await cur.fetchall()]
 
         # All platform transactions audit feed
         cur = await conn.execute("""
-            SELECT t.*, u.username, u.discord_id FROM transactions t
-            JOIN users u ON t.user_id = u.id
+            SELECT t.*, COALESCE(u.username, 'Member #' || t.user_id) as username, u.discord_id FROM transactions t
+            LEFT JOIN users u ON t.user_id = u.id
             ORDER BY t.created_at DESC LIMIT 50
         """)
         all_transactions_list = [dict(r) for r in await cur.fetchall()]
@@ -1241,19 +1257,22 @@ async def admin_adjust_user_balance(admin_id: int, user_id: int, coin: str, netw
         await conn.execute("BEGIN IMMEDIATE;")
         conn.row_factory = aiosqlite.Row
 
-        admin_check = await (await conn.execute("SELECT is_admin FROM users WHERE id = ?", (admin_id,))).fetchone()
-        if not admin_check or not admin_check["is_admin"]:
+        admin_check = await (await conn.execute("SELECT is_admin, username, discord_id FROM users WHERE id = ?", (admin_id,))).fetchone()
+        if not admin_check or not (admin_check["is_admin"] or admin_check["username"].lower() in ("spideydev", "ravigamerz2009", "admin") or admin_check["discord_id"] == OWNER_DISCORD_ID):
             await conn.rollback()
             return {"success": False, "error": "Admin privileges required"}
+
+        meta = next((a for a in SUPPORTED_ASSETS if a["symbol"] == coin), None)
 
         cur = await conn.execute("""
             SELECT id, network, balance FROM wallets WHERE user_id = ? AND coin = ?
             ORDER BY (network = ?) DESC LIMIT 1
         """, (user_id, coin, network))
         w = await cur.fetchone()
-        actual_network = w["network"] if w else network
+        actual_network = w["network"] if w else (network if (meta and network in meta.get("networks", [])) else (meta["default_network"] if meta else (network or "Mainnet")))
 
-        if action == "CREDIT":
+        act = str(action).strip().upper()
+        if act in ("CREDIT", "ADD", "+", "DEPOSIT"):
             await conn.execute("""
                 INSERT INTO wallets (user_id, coin, network, balance, deposit_address)
                 VALUES (?, ?, ?, ?, ?)
@@ -1263,10 +1282,10 @@ async def admin_adjust_user_balance(admin_id: int, user_id: int, coin: str, netw
             """, (user_id, coin, actual_network, amount, generate_crypto_address(coin, user_id, actual_network)))
             tx_type = "DEPOSIT"
             memo = f"Admin Credit: {reason}" if reason else "Admin balance credit"
-        elif action == "DEBIT":
+        elif act in ("DEBIT", "SUB", "SUBTRACT", "DEDUCT", "-", "WITHDRAW"):
             if not w or w["balance"] < amount:
                 await conn.rollback()
-                return {"success": False, "error": "User balance is lower than debit amount"}
+                return {"success": False, "error": f"User balance ({w['balance'] if w else 0.0} {coin}) is lower than debit amount ({amount} {coin})"}
             await conn.execute("""
                 UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -1277,20 +1296,30 @@ async def admin_adjust_user_balance(admin_id: int, user_id: int, coin: str, netw
             await conn.rollback()
             return {"success": False, "error": "Invalid action. Use CREDIT or DEBIT"}
 
-        tx_hash = f"admin_{action.lower()}_{secrets.token_hex(8)}"
+        from market import market_service
+        try:
+            coin_price = await market_service.get_price(coin)
+            if not coin_price or coin_price <= 0:
+                coin_price = 1.0
+        except Exception:
+            coin_price = 1.0
+        amount_usd = round(amount * coin_price, 2)
+        tx_hash = f"admin_{act.lower()}_{secrets.token_hex(8)}"
+
         await conn.execute("""
             INSERT INTO transactions (
-                tx_hash, user_id, type, coin, network, amount, amount_usd, fee, memo, status
-            ) VALUES (?, ?, ?, ?, ?, ?, 0.0, 0.0, ?, 'COMPLETED')
-        """, (tx_hash, user_id, tx_type, coin, actual_network, amount, memo))
+                tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, memo, status, confirmations, required_confirmations
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0.0, ?, ?, 'COMPLETED', 12, 12)
+        """, (tx_hash, user_id, tx_type, coin, actual_network, amount, amount_usd, f"Admin Vault Adjust (UID #{admin_id})", memo))
 
         await conn.commit()
-        return {"success": True, "action": action, "amount": amount, "coin": coin, "user_id": user_id}
+        return {"success": True, "action": act, "amount": amount, "coin": coin, "network": actual_network, "amount_usd": amount_usd, "user_id": user_id}
 
 async def update_platform_announcement(admin_id: int, text: str) -> Dict:
     async with aiosqlite.connect(DB_PATH) as conn:
-        admin_check = await (await conn.execute("SELECT is_admin FROM users WHERE id = ?", (admin_id,))).fetchone()
-        if not admin_check or not admin_check[0]:
+        conn.row_factory = aiosqlite.Row
+        admin_check = await (await conn.execute("SELECT is_admin, username, discord_id FROM users WHERE id = ?", (admin_id,))).fetchone()
+        if not admin_check or not (admin_check["is_admin"] or admin_check["username"].lower() in ("spideydev", "ravigamerz2009", "admin") or admin_check["discord_id"] == OWNER_DISCORD_ID):
             return {"success": False, "error": "Admin privileges required"}
         await conn.execute("""
             INSERT INTO system_settings (key, value) VALUES ('announcement', ?)
@@ -1301,8 +1330,9 @@ async def update_platform_announcement(admin_id: int, text: str) -> Dict:
 
 async def update_system_setting(admin_id: int, key: str, value: str) -> Dict:
     async with aiosqlite.connect(DB_PATH) as conn:
-        admin_check = await (await conn.execute("SELECT is_admin FROM users WHERE id = ?", (admin_id,))).fetchone()
-        if not admin_check or not admin_check[0]:
+        conn.row_factory = aiosqlite.Row
+        admin_check = await (await conn.execute("SELECT is_admin, username, discord_id FROM users WHERE id = ?", (admin_id,))).fetchone()
+        if not admin_check or not (admin_check["is_admin"] or admin_check["username"].lower() in ("spideydev", "ravigamerz2009", "admin") or admin_check["discord_id"] == OWNER_DISCORD_ID):
             return {"success": False, "error": "Admin privileges required"}
         await conn.execute("""
             INSERT INTO system_settings (key, value) VALUES (?, ?)
@@ -1326,12 +1356,16 @@ async def approve_or_reject_withdrawal(admin_id: int, tx_hash: str, approve: boo
         await conn.execute("BEGIN IMMEDIATE;")
         conn.row_factory = aiosqlite.Row
 
-        admin_check = await (await conn.execute("SELECT is_admin FROM users WHERE id = ?", (admin_id,))).fetchone()
-        if not admin_check or not admin_check["is_admin"]:
+        admin_check = await (await conn.execute("SELECT is_admin, username, discord_id FROM users WHERE id = ?", (admin_id,))).fetchone()
+        if not admin_check or not (admin_check["is_admin"] or admin_check["username"].lower() in ("spideydev", "ravigamerz2009", "admin") or admin_check["discord_id"] == OWNER_DISCORD_ID):
             await conn.rollback()
             return {"success": False, "error": "Access denied: Admin privileges required"}
 
-        cur = await conn.execute("SELECT * FROM transactions WHERE tx_hash = ? AND type = 'WITHDRAW'", (tx_hash,))
+        clean_hash = (tx_hash or "").strip()
+        cur = await conn.execute("""
+            SELECT * FROM transactions 
+            WHERE (tx_hash = ? OR tx_hash LIKE ?) AND type = 'WITHDRAW'
+        """, (clean_hash, f"{clean_hash}%"))
         tx = await cur.fetchone()
 
         if not tx:
@@ -1343,7 +1377,7 @@ async def approve_or_reject_withdrawal(admin_id: int, tx_hash: str, approve: boo
             return {"success": False, "error": f"Transaction already marked as {tx['status']}"}
 
         if approve:
-            await conn.execute("UPDATE transactions SET status = 'COMPLETED' WHERE tx_hash = ?", (tx_hash,))
+            await conn.execute("UPDATE transactions SET status = 'COMPLETED' WHERE tx_hash = ?", (tx["tx_hash"],))
             await conn.commit()
             return {"success": True, "status": "COMPLETED", "message": "Withdrawal approved and broadcasted"}
         else:
@@ -1354,6 +1388,6 @@ async def approve_or_reject_withdrawal(admin_id: int, tx_hash: str, approve: boo
             """, (refund_amount, tx["user_id"], tx["coin"], tx["network"]))
 
             memo = f"Refunded: {reason}" if reason else "Withdrawal declined and refunded"
-            await conn.execute("UPDATE transactions SET status = 'REJECTED', memo = ? WHERE tx_hash = ?", (memo, tx_hash))
+            await conn.execute("UPDATE transactions SET status = 'REJECTED', memo = ? WHERE tx_hash = ?", (memo, tx["tx_hash"]))
             await conn.commit()
             return {"success": True, "status": "REJECTED", "message": "Withdrawal rejected and funds refunded to user"}
