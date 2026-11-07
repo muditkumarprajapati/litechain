@@ -477,6 +477,12 @@ async def handle_wallet_portfolio(request: web.Request):
     if not uid:
         return web.json_response({"error": "Unauthorized"}, status=401)
 
+    # Automatically synchronize any confirmed or partially paid on-chain deposits
+    try:
+        await nowpayments.check_user_nowpayments_deposits(uid)
+    except Exception as e:
+        logger.debug(f"Portfolio NOWPayments auto-sync: {e}")
+
     wallets = await db.get_user_wallets(uid)
     market_data = await market_service.get_all_prices()
     prices = market_data["prices"]
