@@ -37,16 +37,22 @@ DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://webwallet-jqgx
 sessions = {}
 
 def extract_token(request: web.Request) -> Optional[str]:
-    """Extract auth session token from Bearer header, X-Session-Token, or cookie."""
+    """Extract auth session token from Bearer header, X-Session-Token, query param, or cookie."""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
-        if token:
+        if token and token not in ("null", "undefined"):
             return token
     x_token = request.headers.get("X-Session-Token", "").strip()
-    if x_token:
+    if x_token and x_token not in ("null", "undefined"):
         return x_token
-    return request.cookies.get("webwallet_session")
+    query_token = request.query.get("token", "").strip()
+    if query_token and query_token not in ("null", "undefined"):
+        return query_token
+    c_token = request.cookies.get("webwallet_session")
+    if c_token and c_token not in ("null", "undefined"):
+        return c_token
+    return None
 
 async def get_current_user_id(request: web.Request) -> Optional[int]:
     """Retrieve verified user ID from active session with DB persistence fallback."""
@@ -68,14 +74,20 @@ async def generate_and_save_session(user_id: int) -> str:
     await db.save_session(session_token, user_id)
     return session_token
 
-def set_session_cookie(resp: web.Response, session_token: str):
+def set_session_cookie(resp: web.Response, session_token: str, request: Optional[web.Request] = None):
     """Set root-scoped persistent authentication cookie."""
+    is_secure = False
+    if request:
+        proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+        if proto == "https":
+            is_secure = True
     resp.set_cookie(
         "webwallet_session",
         session_token,
-        max_age=86400 * 30, # 30 days
+        max_age=86400 * 365, # 1 full year persistence across browser closes
         path="/",           # CRUCIAL: root path so cookie is sent to all routes!
         httponly=False,
+        secure=is_secure,
         samesite="Lax"
     )
 
@@ -111,6 +123,7 @@ async def handle_index(request: web.Request):
 # ================= AUTHENTICATION APIS =================
 
 async def handle_auth_me(request: web.Request):
+    token = extract_token(request)
     uid = await get_current_user_id(request)
     if not uid:
         return web.json_response({"authenticated": False})
@@ -127,7 +140,8 @@ async def handle_auth_me(request: web.Request):
             return web.json_response({"authenticated": False})
         return web.json_response({
             "authenticated": True,
-            "user": dict(user)
+            "user": dict(user),
+            "token": token
         })
 
 async def handle_auth_email_register(request: web.Request):
@@ -151,7 +165,7 @@ async def handle_auth_email_register(request: web.Request):
     session_token = await generate_and_save_session(user["id"])
 
     resp = web.json_response({"success": True, "user": user, "token": session_token})
-    set_session_cookie(resp, session_token)
+    set_session_cookie(resp, session_token, request)
     return resp
 
 async def handle_auth_email_login(request: web.Request):
@@ -170,7 +184,7 @@ async def handle_auth_email_login(request: web.Request):
     session_token = await generate_and_save_session(user["id"])
 
     resp = web.json_response({"success": True, "user": user, "token": session_token})
-    set_session_cookie(resp, session_token)
+    set_session_cookie(resp, session_token, request)
     return resp
 
 async def handle_auth_login_passcode(request: web.Request):
@@ -209,7 +223,7 @@ async def handle_auth_login_passcode(request: web.Request):
             },
             "token": session_token
         })
-        set_session_cookie(resp, session_token)
+        set_session_cookie(resp, session_token, request)
         return resp
 
 async def handle_auth_discord_login(request: web.Request):
@@ -285,8 +299,8 @@ async def handle_auth_discord_callback(request: web.Request):
                 )
                 session_token = await generate_and_save_session(user["id"])
 
-                resp = web.HTTPFound("/app?login_success=1")
-                set_session_cookie(resp, session_token)
+                resp = web.HTTPFound(f"/app?login_success=1&token={session_token}")
+                set_session_cookie(resp, session_token, request)
                 return resp
         except Exception as e:
             logger.error(f"Discord OAuth2 Exception: {e}")
@@ -385,7 +399,7 @@ async def handle_auth_discord_token_login(request: web.Request):
         session_token = await generate_and_save_session(user["id"])
 
         resp = web.json_response({"success": True, "user": user, "token": session_token})
-        set_session_cookie(resp, session_token)
+        set_session_cookie(resp, session_token, request)
         return resp
     except Exception as e:
         logger.error(f"Discord Token Login Exception: {e}")
@@ -428,7 +442,7 @@ async def handle_auth_discord_direct(request: web.Request):
     session_token = await generate_and_save_session(user["id"])
 
     resp = web.json_response({"success": True, "user": user, "token": session_token})
-    set_session_cookie(resp, session_token)
+    set_session_cookie(resp, session_token, request)
     return resp
 
 async def handle_auth_logout(request: web.Request):

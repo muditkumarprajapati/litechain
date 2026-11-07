@@ -4,6 +4,32 @@
  * Email/Password Auth, Discord OAuth2 with Guilds.Join, and Admin Member Puller.
  */
 
+// Immediate session persistence synchronizer: runs before anything else
+(function syncInitialSession() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken && urlToken !== 'null' && urlToken !== 'undefined') {
+      localStorage.setItem('webwallet_session_token', urlToken);
+      document.cookie = `webwallet_session=${urlToken}; path=/; max-age=31536000; SameSite=Lax`;
+      urlParams.delete('token');
+      const cleanSearch = urlParams.toString() ? '?' + urlParams.toString() : '';
+      window.history.replaceState({}, document.title, window.location.pathname + cleanSearch + window.location.hash);
+    } else {
+      const localToken = localStorage.getItem('webwallet_session_token');
+      const match = document.cookie.match(/(?:^|;\s*)webwallet_session=([^;]+)/);
+      const cookieToken = match ? match[1] : null;
+      if (localToken && localToken !== 'null' && localToken !== 'undefined' && (!cookieToken || cookieToken === 'null')) {
+        document.cookie = `webwallet_session=${localToken}; path=/; max-age=31536000; SameSite=Lax`;
+      } else if (cookieToken && cookieToken !== 'null' && cookieToken !== 'undefined' && (!localToken || localToken === 'null' || localToken === 'undefined')) {
+        localStorage.setItem('webwallet_session_token', cookieToken);
+      }
+    }
+  } catch (e) {
+    console.warn('Initial session sync warning:', e);
+  }
+})();
+
 // Auto-attach Bearer authorization header and credentials to all same-origin API requests
 const _originalFetch = window.fetch;
 window.fetch = function(url, init = {}) {
@@ -12,7 +38,7 @@ window.fetch = function(url, init = {}) {
     init = init || {};
     init.credentials = init.credentials || 'include';
     const token = localStorage.getItem('webwallet_session_token');
-    if (token) {
+    if (token && token !== 'null' && token !== 'undefined') {
       init.headers = init.headers || {};
       if (init.headers instanceof Headers) {
         if (!init.headers.has('Authorization')) {
@@ -93,12 +119,19 @@ async function checkAuth() {
     const res = await fetch('/api/auth/me');
     const data = await res.json();
     if (data.authenticated) {
+      if (data.token) {
+        localStorage.setItem('webwallet_session_token', data.token);
+        document.cookie = `webwallet_session=${data.token}; path=/; max-age=31536000; SameSite=Lax`;
+      }
       app.currentUser = data.user;
       renderUserUI();
       await loadPortfolio();
       await loadTransactions();
       if (app.currentUser.is_admin) await loadAdminMetrics();
     } else {
+      if (res.status === 401 || !localStorage.getItem('webwallet_session_token')) {
+        localStorage.removeItem('webwallet_session_token');
+      }
       app.currentUser = null;
       app.portfolio = null;
       app.transactions = [];
@@ -284,6 +317,7 @@ async function executeLogout() {
     console.error('Logout error:', e);
   }
   localStorage.removeItem('webwallet_session_token');
+  document.cookie = 'webwallet_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   app.currentUser = null;
   app.portfolio = null;
   app.transactions = [];
