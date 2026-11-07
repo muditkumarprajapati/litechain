@@ -1059,18 +1059,30 @@ function renderTransactionsTable() {
     let amtColor = 'var(--text-main)';
     let typeLabel = t.type;
 
+    const isPending = (t.status || '').toUpperCase() === 'PENDING';
+
     switch(t.type) {
       case 'DEPOSIT':
-        typeBadge = `<span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-arrow-down-left"></i> Deposit</span>`;
+        if (isPending) {
+          typeBadge = `<span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.12);"><i class="fa-solid fa-spinner fa-spin"></i> Receiving</span>`;
+          typeLabel = 'Receiving On-Chain';
+        } else {
+          typeBadge = `<span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-arrow-down-left"></i> Received</span>`;
+          typeLabel = 'Received Deposit';
+        }
         sign = '+';
         amtColor = 'var(--accent-emerald)';
-        typeLabel = 'Inbound Deposit';
         break;
       case 'WITHDRAW':
-        typeBadge = `<span class="brand-badge" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);"><i class="fa-solid fa-arrow-up-right"></i> Withdrawal</span>`;
+        if (isPending) {
+          typeBadge = `<span class="brand-badge" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.12);"><i class="fa-solid fa-spinner fa-spin"></i> Sending</span>`;
+          typeLabel = 'Sending On-Chain';
+        } else {
+          typeBadge = `<span class="brand-badge" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);"><i class="fa-solid fa-arrow-up-right"></i> Sent</span>`;
+          typeLabel = 'Sent Outbound';
+        }
         sign = '-';
         amtColor = 'var(--accent-rose)';
-        typeLabel = 'Outbound Withdrawal';
         break;
       case 'TIP_SENT':
         typeBadge = `<span class="brand-badge" style="color:var(--accent-blurple); border-color:rgba(88,101,242,0.3); background:rgba(88,101,242,0.1);"><i class="fa-solid fa-paper-plane"></i> Tip Sent</span>`;
@@ -1085,8 +1097,8 @@ function renderTransactionsTable() {
         typeLabel = 'P2P Tip Received';
         break;
       case 'SWAP':
-        typeBadge = `<span class="brand-badge" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.1);"><i class="fa-solid fa-shuffle"></i> Swap</span>`;
-        typeLabel = 'Cross-Chain Swap';
+        typeBadge = `<span class="brand-badge" style="color:var(--accent-purple); border-color:rgba(139,92,246,0.3); background:rgba(139,92,246,0.1);"><i class="fa-solid fa-shuffle"></i> Swapped</span>`;
+        typeLabel = 'Cross-Chain Swapped';
         amtColor = 'var(--accent-cyan)';
         break;
       default:
@@ -1096,9 +1108,26 @@ function renderTransactionsTable() {
     const cleanHash = t.tx_hash || '';
     const shortHash = cleanHash.length > 16 ? `${cleanHash.slice(0, 8)}...${cleanHash.slice(-6)}` : cleanHash;
 
-    const statusBadge = t.status === 'PENDING'
-      ? `<span class="brand-badge" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.1);"><i class="fa-solid fa-spinner fa-spin"></i> Confirming</span>`
-      : `<span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-circle-check"></i> Completed</span>`;
+    let statusBadge = '';
+    if (isPending) {
+      if (t.type === 'DEPOSIT') {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.1);"><i class="fa-solid fa-spinner fa-spin"></i> Receiving</span>`;
+      } else if (t.type === 'WITHDRAW') {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.1);"><i class="fa-solid fa-spinner fa-spin"></i> Sending</span>`;
+      } else {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.1);"><i class="fa-solid fa-spinner fa-spin"></i> Confirming</span>`;
+      }
+    } else {
+      if (t.type === 'DEPOSIT') {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-circle-check"></i> Received</span>`;
+      } else if (t.type === 'WITHDRAW') {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);"><i class="fa-solid fa-circle-check"></i> Sent</span>`;
+      } else if (t.type === 'SWAP') {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-purple); border-color:rgba(139,92,246,0.3); background:rgba(139,92,246,0.1);"><i class="fa-solid fa-circle-check"></i> Swapped</span>`;
+      } else {
+        statusBadge = `<span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-circle-check"></i> Completed</span>`;
+      }
+    }
 
     let counterparty = '-';
     if (t.type === 'DEPOSIT') {

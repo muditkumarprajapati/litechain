@@ -419,16 +419,16 @@
                 <button class="tx-pill-btn active" onclick="filterTransactionsView('ALL', this)"><i
                     class="fa-solid fa-layer-group"></i> All Activity</button>
                 <button class="tx-pill-btn" onclick="filterTransactionsView('DEPOSIT', this)"><i
-                    class="fa-solid fa-arrow-down-left" style="color:var(--accent-emerald);"></i> Deposits</button>
+                    class="fa-solid fa-arrow-down-left" style="color:var(--accent-emerald);"></i> Receiving / Received</button>
                 <button class="tx-pill-btn" onclick="filterTransactionsView('WITHDRAW', this)"><i
-                    class="fa-solid fa-arrow-up-right" style="color:var(--accent-rose);"></i> Withdrawals</button>
+                    class="fa-solid fa-arrow-up-right" style="color:var(--accent-rose);"></i> Sending / Sent</button>
+                <button class="tx-pill-btn" onclick="filterTransactionsView('SWAP', this)"><i
+                    class="fa-solid fa-shuffle" style="color:var(--accent-purple);"></i> Swaps</button>
                 <button class="tx-pill-btn" onclick="filterTransactionsView('TIP_SENT', this)"><i
                     class="fa-solid fa-paper-plane" style="color:var(--accent-blurple);"></i> Tips Sent</button>
                 <button class="tx-pill-btn" onclick="filterTransactionsView('TIP_RECEIVED', this)"><i
                     class="fa-solid fa-hand-holding-dollar" style="color:var(--accent-cyan);"></i> Tips
                   Received</button>
-                <button class="tx-pill-btn" onclick="filterTransactionsView('SWAP', this)"><i
-                    class="fa-solid fa-shuffle" style="color:var(--accent-amber);"></i> Swaps</button>
               </div>
 
               <!-- Search, Status Filter, and Asset Filter -->
@@ -1921,7 +1921,7 @@
   </style>
 
   <!-- Client JavaScript -->
-  <script src="/static/js/webwallet.js?v=2.8.0"></script>
+  <script src="/static/js/webwallet.js?v=2.8.1"></script>
 </body>
 
 </html>
