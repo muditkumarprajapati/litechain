@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WebWallet | Enterprise Multi-Chain Cryptocurrency Platform</title>
   <link rel="icon" type="image/jpeg" href="/static/images/webwallet_icon.jpg">
-  <link rel="stylesheet" href="/static/css/webwallet.css?v=2.7.7">
+  <link rel="stylesheet" href="/static/css/webwallet.css?v=2.8.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Chart.js for real financial analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -740,44 +740,268 @@
 
         <!-- ================= VIEW 5: PROFILE ================= -->
         <section id="view-profile" class="view-section">
-          <div class="card" style="max-width:700px; margin:0 auto 28px;">
-            <div
-              style="display:flex; align-items:center; gap:20px; border-bottom:1px solid var(--border-subtle); padding-bottom:24px; margin-bottom:24px;">
-              <img id="profileAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png"
-                style="width:72px; height:72px; border-radius:50%; border:2px solid var(--accent-purple);">
-              <div>
-                <div style="font-size:1.4rem; font-weight:800;" id="profileUsername">Not Signed In</div>
-                <div style="font-size:0.85rem; color:var(--text-muted); font-family:var(--font-mono);"
-                  id="profileDiscordId">Please sign in to access your wallet</div>
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                  <span class="brand-badge" id="profileRoleBadge">GUEST</span>
-                  <span class="brand-badge"
-                    style="color:var(--text-muted); border-color:var(--border-subtle);">WEB3</span>
+          
+          <!-- Hero Profile Card -->
+          <div class="card" style="background: linear-gradient(135deg, rgba(88, 101, 242, 0.12) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(6, 182, 212, 0.05) 100%), var(--bg-card); border: 1px solid rgba(139, 92, 246, 0.25); border-radius:20px; padding:28px; margin-bottom:24px; position:relative; overflow:hidden;">
+            <!-- Ambient Glow -->
+            <div style="position:absolute; top:-60px; right:-60px; width:220px; height:220px; background:radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%); pointer-events:none; filter:blur(25px);"></div>
+
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px; position:relative; z-index:1;">
+              <div style="display:flex; align-items:center; gap:22px; flex-wrap:wrap;">
+                <div style="position:relative; cursor:pointer;" onclick="openEditProfileModal()" title="Click to change avatar">
+                  <img id="profileAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png"
+                    style="width:84px; height:84px; border-radius:50%; border:3px solid var(--accent-purple); box-shadow:0 0 20px rgba(139,92,246,0.35); object-fit:cover;">
+                  <span style="position:absolute; bottom:0; right:0; background:var(--accent-purple); color:#fff; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.75rem; border:2px solid var(--bg-card);">
+                    <i class="fa-solid fa-camera"></i>
+                  </span>
+                </div>
+                <div>
+                  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div style="font-size:1.6rem; font-weight:800; letter-spacing:-0.5px;" id="profileUsername">Not Signed In</div>
+                    <i class="fa-solid fa-circle-check" style="color:var(--accent-emerald); font-size:1.1rem;" title="Identity Verified"></i>
+                    <button class="btn-action" style="padding:4px 10px; font-size:0.75rem; background:rgba(255,255,255,0.05);" onclick="openEditProfileModal()">
+                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                  </div>
+                  <div style="font-size:0.85rem; color:var(--text-muted); font-family:var(--font-mono); margin-top:2px;" id="profileDiscordId">
+                    Please sign in to access your wallet
+                  </div>
+                  
+                  <div style="display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                    <!-- UID Copy Pill -->
+                    <span id="profileUidPill" class="brand-badge" style="cursor:pointer; background:rgba(6,182,212,0.12); color:var(--accent-cyan); border-color:rgba(6,182,212,0.3); font-family:var(--font-mono);" onclick="copyProfileUID()" title="Click to copy User ID">
+                      <i class="fa-solid fa-fingerprint"></i> <span id="profileUidVal">UID: #00000</span> <i class="fa-regular fa-copy" style="margin-left:4px; font-size:0.7rem;"></i>
+                    </span>
+                    <span class="brand-badge" id="profileRoleBadge" style="color:var(--accent-purple); border-color:rgba(139,92,246,0.4);">GUEST</span>
+                    <span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3);">
+                      <i class="fa-solid fa-shield-halved"></i> KYC TIER 1
+                    </span>
+                    <span class="brand-badge" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.3);">
+                      <i class="fa-solid fa-crown"></i> 0.8% FEE RATE
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button class="btn-action" onclick="exportTransactionsCSV()" style="background:rgba(255,255,255,0.06);">
+                  <i class="fa-solid fa-file-arrow-down" style="color:var(--accent-cyan);"></i> Export CSV
+                </button>
+                <button class="btn-action" onclick="resyncUserData()" style="background:rgba(255,255,255,0.06);">
+                  <i class="fa-solid fa-arrows-rotate" style="color:var(--accent-purple);"></i> Refresh
+                </button>
+                <button class="btn-action" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.35); background:rgba(244,63,94,0.08);" onclick="executeLogout()">
+                  <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Financial & Account Highlights Cards -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+            <!-- Net Portfolio Value -->
+            <div class="card" style="padding:20px; border-radius:16px; position:relative;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Portfolio Net Worth</span>
+                <i class="fa-solid fa-eye" id="profileBalanceEye" style="color:var(--text-muted); cursor:pointer; font-size:0.85rem;" onclick="togglePrivacyMode()" title="Toggle Balance Visibility"></i>
+              </div>
+              <div style="font-size:1.75rem; font-weight:800; font-family:var(--font-mono); color:#fff;" id="profileNetBalance">$0.00 <span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">USD</span></div>
+              <div style="font-size:0.78rem; color:var(--accent-emerald); font-weight:600; margin-top:4px;">
+                <i class="fa-solid fa-arrow-trend-up"></i> Real-time Liquid Valuation
+              </div>
+            </div>
+
+            <!-- Active Multi-Chain Addresses -->
+            <div class="card" style="padding:20px; border-radius:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">On-Chain Vaults</span>
+                <i class="fa-solid fa-cubes" style="color:var(--accent-cyan); font-size:0.9rem;"></i>
+              </div>
+              <div style="font-size:1.75rem; font-weight:800; font-family:var(--font-mono); color:#fff;" id="profileWalletCount">12 Networks</div>
+              <div style="font-size:0.78rem; color:var(--accent-cyan); font-weight:600; margin-top:4px;">
+                <i class="fa-solid fa-circle-check"></i> NOWPayments &amp; Direct Vaults
+              </div>
+            </div>
+
+            <!-- Total Transactions -->
+            <div class="card" style="padding:20px; border-radius:16px; cursor:pointer;" onclick="switchView('transactions')" title="View Transaction History">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Activity Records</span>
+                <i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-purple); font-size:0.9rem;"></i>
+              </div>
+              <div style="font-size:1.75rem; font-weight:800; font-family:var(--font-mono); color:#fff;" id="profileTxCount">0 Records</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary); font-weight:600; margin-top:4px;">
+                <span>Click to view ledger <i class="fa-solid fa-arrow-right" style="font-size:0.7rem;"></i></span>
+              </div>
+            </div>
+
+            <!-- Security Grade -->
+            <div class="card" style="padding:20px; border-radius:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Security Shield</span>
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent-emerald); font-size:0.9rem;"></i>
+              </div>
+              <div style="font-size:1.75rem; font-weight:800; font-family:var(--font-mono); color:var(--accent-emerald);">Grade A+</div>
+              <div style="font-size:0.78rem; color:var(--accent-emerald); font-weight:600; margin-top:4px;">
+                <i class="fa-solid fa-lock"></i> 365-Day Hardware Bound
+              </div>
+            </div>
+          </div>
+
+          <!-- Two-Column Institutional Grid -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:24px; margin-bottom:24px;">
+            
+            <!-- Left Column: Security & Authentication Controls -->
+            <div class="card" style="border-radius:18px; padding:24px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; border-bottom:1px solid var(--border-subtle); padding-bottom:14px;">
+                <div style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+                  <i class="fa-solid fa-lock" style="color:var(--accent-purple);"></i> Security &amp; Access Controls
+                </div>
+                <span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3);">ENFORCED</span>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:14px;">
+                <!-- 2FA -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Two-Factor Authentication (2FA)</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Required for high-value automated payouts</div>
+                  </div>
+                  <span class="brand-badge" style="color:var(--accent-emerald);"><i class="fa-solid fa-check"></i> ACTIVE</span>
+                </div>
+
+                <!-- Master Security PIN -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Master Vault PIN</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Protects withdraws and internal wallet tips</div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-family:var(--font-mono); color:var(--accent-cyan); font-weight:700; font-size:0.9rem;">••••••</span>
+                    <button class="btn-action" style="padding:4px 8px; font-size:0.72rem;" onclick="promptChangePIN()">Change</button>
+                  </div>
+                </div>
+
+                <!-- Anti-Phishing Code -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Anti-Phishing Safety Phrase</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Displays on legitimate receipts to verify authenticity</div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="profileAntiPhishCode" style="font-family:var(--font-mono); color:var(--accent-amber); font-weight:700; font-size:0.85rem;">WEBWALLET-VERIFIED</span>
+                    <button class="btn-action" style="padding:4px 8px; font-size:0.72rem;" onclick="promptSetAntiPhish()">Edit</button>
+                  </div>
+                </div>
+
+                <!-- Active Session Meta -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px;">
+                  <div style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">Active Device Session</div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.8rem;">
+                    <div>
+                      <span style="color:var(--text-muted);">Client Platform:</span>
+                      <div style="font-weight:600; color:#fff;" id="profileClientPlatform">Web / Browser</div>
+                    </div>
+                    <div>
+                      <span style="color:var(--text-muted);">Persistence Mode:</span>
+                      <div style="font-weight:600; color:var(--accent-emerald);">365-Day Hardware Token</div>
+                    </div>
+                    <div>
+                      <span style="color:var(--text-muted);">Member Since:</span>
+                      <div style="font-weight:600; color:#fff;" id="profileJoinedDate">Nov 2026</div>
+                    </div>
+                    <div>
+                      <span style="color:var(--text-muted);">Session Status:</span>
+                      <div style="font-weight:600; color:var(--accent-emerald);"><span class="pulse-dot"></span> Active Now</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
-              <div
-                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle);">
-                <div style="font-size:0.75rem; color:var(--text-muted);">MEMBER SINCE</div>
-                <div style="font-size:1rem; font-weight:700;" id="profileJoinedDate">Nov 2026</div>
+            <!-- Right Column: Preferences & Customization -->
+            <div class="card" style="border-radius:18px; padding:24px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; border-bottom:1px solid var(--border-subtle); padding-bottom:14px;">
+                <div style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+                  <i class="fa-solid fa-sliders" style="color:var(--accent-cyan);"></i> Preferences &amp; Customization
+                </div>
+                <span class="brand-badge" style="color:var(--accent-cyan); border-color:rgba(6,182,212,0.3);">CUSTOM</span>
               </div>
-              <div
-                style="background:var(--bg-input); padding:16px; border-radius:12px; border:1px solid var(--border-subtle);">
-                <div style="font-size:0.75rem; color:var(--text-muted);">SECURITY STATUS</div>
-                <div style="font-size:1rem; font-weight:700; color:var(--accent-emerald);"><i
-                    class="fa-solid fa-circle-check"></i> High (PIN Enabled)</div>
+
+              <div style="display:flex; flex-direction:column; gap:14px;">
+                <!-- Base Currency Selection -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Display Base Currency</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Preferred currency for market &amp; portfolio metrics</div>
+                  </div>
+                  <select id="profileCurrencySelect" class="form-control" style="width:115px; padding:6px 10px; font-size:0.85rem; background:#0c101d; border-color:rgba(255,255,255,0.12);" onchange="updateUserBaseCurrency(this.value)">
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="CAD">CAD ($)</option>
+                    <option value="JPY">JPY (¥)</option>
+                  </select>
+                </div>
+
+                <!-- Stealth Privacy Mode -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Privacy Stealth Shield</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Mask all monetary balances with •••••• across the app</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="profilePrivacyToggle" onchange="togglePrivacyMode(this.checked)">
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+
+                <!-- Sound Effects -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Audio Confirmation Chimes</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Play audio chime when deposit or swap completes</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="profileAudioToggle" onchange="toggleAudioChimes(this.checked)" checked>
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+
+                <!-- Instant Notification Feed -->
+                <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:700; font-size:0.9rem;">Instant IPN Webhook Sync</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Real-time crypto confirmations via NOWPayments</div>
+                  </div>
+                  <span class="brand-badge" style="color:var(--accent-emerald);"><i class="fa-solid fa-satellite-dish"></i> CONNECTED</span>
+                </div>
               </div>
             </div>
 
-            <div style="border-top:1px solid var(--border-subtle); padding-top:20px;">
-              <button class="btn-action" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3);"
-                onclick="executeLogout()">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Disconnect / Logout
+          </div>
+
+          <!-- Quick Public On-Chain Address Directory -->
+          <div class="card" style="border-radius:18px; padding:24px; margin-bottom:24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+                  <i class="fa-solid fa-address-book" style="color:var(--accent-emerald);"></i> My Public On-Chain Deposit Addresses
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">Share these public addresses with anyone to receive crypto directly into your WebWallet account</div>
+              </div>
+              <button class="btn-action primary" onclick="openModal('depositModal')" style="padding:6px 14px; font-size:0.8rem;">
+                <i class="fa-solid fa-plus"></i> Open Deposit Modal
               </button>
             </div>
+
+            <div id="profileAddressDirectory" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap:12px;">
+              <!-- Populated dynamically by webwallet.js -->
+            </div>
           </div>
+
         </section>
 
         <!-- ================= VIEW 6: SECURITY ================= -->
@@ -1870,6 +2094,47 @@
     </div>
   </div>
 
+  <!-- 8. EDIT PROFILE & AVATAR MODAL -->
+  <div class="modal-backdrop" id="editProfileModal">
+    <div class="modal-container" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-user-pen" style="color:var(--accent-purple); margin-right:8px;"></i> Edit Profile Details</h3>
+        <button class="modal-close-btn" onclick="closeModal('editProfileModal')">&times;</button>
+      </div>
+
+      <div style="margin-bottom:20px; text-align:center;">
+        <img id="editProfileAvatarPreview" src="https://cdn.discordapp.com/embed/avatars/0.png"
+          style="width:84px; height:84px; border-radius:50%; border:3px solid var(--accent-purple); object-fit:cover; margin-bottom:12px; box-shadow:0 0 20px rgba(139,92,246,0.35);">
+        <div style="font-size:0.8rem; color:var(--text-muted);">Choose a quick avatar preset or paste custom image URL</div>
+        
+        <!-- Quick Avatar Presets Grid -->
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=CryptoApe" style="width:42px; height:42px; border-radius:50%; cursor:pointer; border:2px solid var(--border-subtle); background:#111728;" onclick="selectAvatarPreset(this.src)" title="Cyber Bot">
+          <img src="https://api.dicebear.com/7.x/identicon/svg?seed=CryptoBull" style="width:42px; height:42px; border-radius:50%; cursor:pointer; border:2px solid var(--border-subtle); background:#111728;" onclick="selectAvatarPreset(this.src)" title="Golden Bull">
+          <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=SpaceTrader" style="width:42px; height:42px; border-radius:50%; cursor:pointer; border:2px solid var(--border-subtle); background:#111728;" onclick="selectAvatarPreset(this.src)" title="Space Trader">
+          <img src="https://api.dicebear.com/7.x/personas/svg?seed=NeonSamurai" style="width:42px; height:42px; border-radius:50%; cursor:pointer; border:2px solid var(--border-subtle); background:#111728;" onclick="selectAvatarPreset(this.src)" title="Neon Samurai">
+          <img src="https://api.dicebear.com/7.x/shapes/svg?seed=DiamondHands" style="width:42px; height:42px; border-radius:50%; cursor:pointer; border:2px solid var(--border-subtle); background:#111728;" onclick="selectAvatarPreset(this.src)" title="Diamond Hands">
+          <img src="https://api.dicebear.com/7.x/micah/svg?seed=Web3Whale" style="width:42px; height:42px; border-radius:50%; cursor:pointer; border:2px solid var(--border-subtle); background:#111728;" onclick="selectAvatarPreset(this.src)" title="Web3 Whale">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Display Username</label>
+        <input type="text" class="form-control" id="editUsernameInput" placeholder="Enter display username" maxlength="32">
+      </div>
+
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Avatar Image URL (or click any preset above)</label>
+        <input type="text" class="form-control" id="editAvatarUrlInput" placeholder="https://..." oninput="document.getElementById('editProfileAvatarPreview').src = this.value">
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn-action" style="flex:1;" onclick="closeModal('editProfileModal')">Cancel</button>
+        <button class="btn-action primary" style="flex:1;" onclick="submitSaveProfile()">Save Profile</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Sidebar Backdrop for Mobile Drawer -->
   <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleSidebar()"></div>
 
@@ -1921,7 +2186,7 @@
   </style>
 
   <!-- Client JavaScript -->
-  <script src="/static/js/webwallet.js?v=2.8.2"></script>
+  <script src="/static/js/webwallet.js?v=2.8.3"></script>
 </body>
 
 </html>

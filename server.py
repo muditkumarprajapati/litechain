@@ -455,6 +455,21 @@ async def handle_auth_logout(request: web.Request):
     resp.del_cookie("webwallet_session", path="/")
     return resp
 
+async def handle_user_update_profile(request: web.Request):
+    uid = await get_current_user_id(request)
+    if not uid:
+        return web.json_response({"error": "Unauthorized"}, status=401)
+    
+    data = await request.json() if request.can_read_body else {}
+    username = data.get("username")
+    avatar = data.get("avatar")
+    currency = data.get("currency")
+
+    result = await db.update_user_profile(uid, username=username, avatar=avatar, currency=currency)
+    if not result.get("success"):
+        return web.json_response(result, status=400)
+    return web.json_response(result)
+
 # ================= WALLET & PORTFOLIO APIS =================
 
 async def handle_wallet_portfolio(request: web.Request):
@@ -1007,6 +1022,7 @@ def create_app():
     app.router.add_get("/api/auth/discord/login", handle_auth_discord_login)
     app.router.add_get("/api/auth/discord/callback", handle_auth_discord_callback)
     app.router.add_post("/api/auth/logout", handle_auth_logout)
+    app.router.add_post("/api/user/profile", handle_user_update_profile)
 
     # Wallet Endpoints
     app.router.add_get("/api/wallet/portfolio", handle_wallet_portfolio)

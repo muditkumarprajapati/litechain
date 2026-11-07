@@ -333,11 +333,6 @@ function renderUserUI() {
   const area = document.getElementById('topbarUserArea');
   const adminItem = document.getElementById('adminSidebarItem');
 
-  const pAvatar = document.getElementById('profileAvatar');
-  const pUser = document.getElementById('profileUsername');
-  const pDiscord = document.getElementById('profileDiscordId');
-  const pBadge = document.getElementById('profileRoleBadge');
-
   if (!app.currentUser) {
     area.innerHTML = `
       <button class="btn-action primary" onclick="openModal('authModal')">
@@ -346,18 +341,10 @@ function renderUserUI() {
     `;
     if (adminItem) adminItem.style.display = 'none';
 
-    if (pAvatar) pAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-    if (pUser) pUser.innerText = 'Not Signed In';
-    if (pDiscord) pDiscord.innerText = 'Please sign in to access your wallet';
-    if (pBadge) {
-      pBadge.innerText = 'GUEST';
-      pBadge.style.color = 'var(--text-muted)';
-      pBadge.style.borderColor = 'var(--border-subtle)';
-    }
-
     const balEl = document.getElementById('totalBalanceUsd');
     if (balEl) balEl.innerHTML = '$0.00 <span style="font-size:1.1rem; color:var(--text-muted); font-weight:500;">USD</span>';
 
+    renderProfileView();
     return;
   }
 
@@ -376,14 +363,385 @@ function renderUserUI() {
     adminItem.style.display = isAdmin ? 'block' : 'none';
   }
 
+  renderProfileView();
+}
+
+// ================= PROFILE TAB & USER PREFERENCES =================
+
+function renderProfileView() {
+  if (!app.currentUser) {
+    const pAvatar = document.getElementById('profileAvatar');
+    if (pAvatar) pAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+    const pUser = document.getElementById('profileUsername');
+    if (pUser) pUser.innerText = 'Not Signed In';
+    const pDiscord = document.getElementById('profileDiscordId');
+    if (pDiscord) pDiscord.innerText = 'Please sign in to access your wallet';
+    const pUid = document.getElementById('profileUidVal');
+    if (pUid) pUid.innerText = 'UID: #00000';
+    const pBadge = document.getElementById('profileRoleBadge');
+    if (pBadge) {
+      pBadge.innerText = 'GUEST';
+      pBadge.style.color = 'var(--text-muted)';
+      pBadge.style.borderColor = 'var(--border-subtle)';
+    }
+    const pNet = document.getElementById('profileNetBalance');
+    if (pNet) pNet.innerHTML = '$0.00 <span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">USD</span>';
+    const pTx = document.getElementById('profileTxCount');
+    if (pTx) pTx.innerText = '0 Records';
+    const pDir = document.getElementById('profileAddressDirectory');
+    if (pDir) pDir.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; padding:12px;">Sign in to view your on-chain deposit addresses.</div>`;
+    return;
+  }
+
+  const u = app.currentUser;
+  const avatar = u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+  const isAdmin = Boolean(u.is_admin);
+
+  // Avatar & Basic info
+  const pAvatar = document.getElementById('profileAvatar');
   if (pAvatar) pAvatar.src = avatar;
-  if (pUser) pUser.innerText = app.currentUser.username;
-  if (pDiscord) pDiscord.innerText = app.currentUser.discord_id?.startsWith('email_') ? `Email: ${app.currentUser.email}` : `Discord ID: ${app.currentUser.discord_id}`;
+
+  const pUser = document.getElementById('profileUsername');
+  if (pUser) pUser.innerText = u.username;
+
+  const pDiscord = document.getElementById('profileDiscordId');
+  if (pDiscord) {
+    if (u.discord_id && u.discord_id.startsWith('email_')) {
+      pDiscord.innerHTML = `<i class="fa-solid fa-envelope" style="color:var(--accent-cyan); margin-right:5px;"></i> ${u.email || 'Email Verified'}`;
+    } else {
+      pDiscord.innerHTML = `<i class="fa-brands fa-discord" style="color:var(--accent-blurple); margin-right:5px;"></i> Discord: ${u.username} (${u.discord_id || 'Linked'})`;
+    }
+  }
+
+  // UID
+  const pUid = document.getElementById('profileUidVal');
+  if (pUid) pUid.innerText = `UID: #${u.id.toString().padStart(5, '0')}`;
+
+  // Role Badge
+  const pBadge = document.getElementById('profileRoleBadge');
   if (pBadge) {
-    pBadge.innerText = isAdmin ? 'PLATFORM ADMIN / OWNER' : 'VERIFIED MEMBER';
+    pBadge.innerText = isAdmin ? 'PLATFORM ADMIN' : 'VERIFIED MEMBER';
     pBadge.style.color = isAdmin ? 'var(--accent-purple)' : 'var(--accent-cyan)';
     pBadge.style.borderColor = isAdmin ? 'var(--accent-purple)' : 'rgba(6,182,212,0.4)';
   }
+
+  // Member Since
+  const pJoined = document.getElementById('profileJoinedDate');
+  if (pJoined) {
+    if (u.created_at) {
+      try {
+        const d = new Date(u.created_at);
+        pJoined.innerText = d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+      } catch (e) {
+        pJoined.innerText = 'Active Member';
+      }
+    } else {
+      pJoined.innerText = 'Nov 2026';
+    }
+  }
+
+  // Client Platform Detection
+  const pPlatform = document.getElementById('profileClientPlatform');
+  if (pPlatform) {
+    const ua = navigator.userAgent;
+    let os = 'Windows PC';
+    if (ua.includes('Macintosh')) os = 'macOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else if (ua.includes('Android')) os = 'Android Mobile';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS Device';
+    
+    let browser = 'Web Browser';
+    if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Edg')) browser = 'Edge';
+    else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+
+    pPlatform.innerText = `${os} (${browser})`;
+  }
+
+  // Financial Highlights
+  const pBal = document.getElementById('profileNetBalance');
+  if (pBal) {
+    const isHidden = app.isBalanceHidden;
+    const cur = u.currency || localStorage.getItem('webwallet_currency') || 'USD';
+    const totalUsd = app.portfolio ? app.portfolio.total_valuation_usd || 0 : 0;
+    if (isHidden) {
+      pBal.innerHTML = `•••••• <span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">${cur}</span>`;
+    } else {
+      pBal.innerHTML = `$${formatNumber(totalUsd, 2)} <span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">${cur}</span>`;
+    }
+  }
+
+  // Eye Icon sync
+  const pEye = document.getElementById('profileBalanceEye');
+  if (pEye) {
+    pEye.className = app.isBalanceHidden ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+  }
+
+  // Total Tx Count
+  const pTxCount = document.getElementById('profileTxCount');
+  if (pTxCount) {
+    const count = app.transactions ? app.transactions.length : 0;
+    pTxCount.innerText = `${count} ${count === 1 ? 'Record' : 'Records'}`;
+  }
+
+  // Wallets Count
+  const pWallets = document.getElementById('profileWalletCount');
+  if (pWallets) {
+    const wCount = app.portfolio && app.portfolio.wallets ? app.portfolio.wallets.length : 12;
+    pWallets.innerText = `${wCount} Networks`;
+  }
+
+  // Preferences controls
+  const curSelect = document.getElementById('profileCurrencySelect');
+  if (curSelect) {
+    curSelect.value = u.currency || localStorage.getItem('webwallet_currency') || 'USD';
+  }
+
+  const privToggle = document.getElementById('profilePrivacyToggle');
+  if (privToggle) {
+    privToggle.checked = Boolean(app.isBalanceHidden);
+  }
+
+  const audToggle = document.getElementById('profileAudioToggle');
+  if (audToggle) {
+    audToggle.checked = localStorage.getItem('webwallet_audio') !== '0';
+  }
+
+  const phishEl = document.getElementById('profileAntiPhishCode');
+  if (phishEl) {
+    phishEl.innerText = localStorage.getItem('webwallet_antiphish') || 'WEBWALLET-VERIFIED';
+  }
+
+  // Populate Public Deposit Addresses
+  renderProfileAddresses();
+}
+
+function renderProfileAddresses() {
+  const container = document.getElementById('profileAddressDirectory');
+  if (!container) return;
+
+  const wallets = app.portfolio && app.portfolio.wallets ? app.portfolio.wallets : [];
+  if (wallets.length === 0) {
+    container.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; padding:12px;">Loading multi-chain addresses...</div>`;
+    return;
+  }
+
+  // Pick key coins: LTC, BTC, SOL, USDT, DOGE, ETH
+  const featured = ['LTC', 'BTC', 'SOL', 'USDT', 'DOGE', 'ETH', 'TRX'];
+  const matched = wallets.filter(w => featured.includes(w.coin)).slice(0, 6);
+  const toShow = matched.length > 0 ? matched : wallets.slice(0, 6);
+
+  container.innerHTML = toShow.map(w => {
+    const addr = w.deposit_address || 'Generating...';
+    const shortAddr = addr.length > 20 ? `${addr.substring(0, 10)}...${addr.substring(addr.length - 8)}` : addr;
+    const icon = w.icon_url || `/static/images/coins/${w.coin.toLowerCase()}.png`;
+
+    return `
+      <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+          <img src="${icon}" style="width:28px; height:28px; border-radius:50%; object-fit:contain;" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=${w.coin}'">
+          <div style="overflow:hidden;">
+            <div style="font-weight:700; font-size:0.85rem; color:#fff; display:flex; align-items:center; gap:6px;">
+              ${w.coin} <span style="font-size:0.7rem; color:var(--text-muted); font-weight:500;">${w.network || 'Mainnet'}</span>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--accent-cyan); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="${addr}">
+              ${shortAddr}
+            </div>
+          </div>
+        </div>
+        <button class="btn-action" style="padding:4px 8px; font-size:0.72rem; flex-shrink:0;" onclick="copyToClipboard('${addr}', '${w.coin} address copied!')" title="Copy Address">
+          <i class="fa-regular fa-copy"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyProfileUID() {
+  if (!app.currentUser) {
+    showToast('Please sign in first', true);
+    return;
+  }
+  const uidText = `UID: #${app.currentUser.id.toString().padStart(5, '0')}`;
+  copyToClipboard(uidText, `${uidText} copied to clipboard! 📋`);
+}
+
+function exportTransactionsCSV() {
+  if (!app.transactions || app.transactions.length === 0) {
+    showToast('No transactions found to export', true);
+    return;
+  }
+  const headers = ['ID', 'Type', 'Coin', 'Network', 'Amount', 'Fee', 'USD Value', 'TxHash', 'Status', 'Date'];
+  const rows = app.transactions.map(tx => [
+    tx.id,
+    tx.tx_type,
+    tx.coin,
+    tx.network || '',
+    tx.amount,
+    tx.fee || 0,
+    tx.usd_value || 0,
+    tx.tx_hash || '',
+    tx.status,
+    tx.created_at
+  ]);
+  const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `WebWallet_Statement_${app.currentUser ? app.currentUser.username : 'User'}_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('Account statement exported successfully! 📊');
+}
+
+async function resyncUserData() {
+  showToast('Re-syncing wallet & on-chain state... 🔄');
+  await checkAuth();
+  await loadPortfolio();
+  await loadTransactions();
+  renderProfileView();
+  showToast('Wallet synchronization complete! ⚡');
+}
+
+function openEditProfileModal() {
+  if (!app.currentUser) {
+    openModal('authModal');
+    return;
+  }
+  const nameInput = document.getElementById('editUsernameInput');
+  const avatarInput = document.getElementById('editAvatarUrlInput');
+  const preview = document.getElementById('editProfileAvatarPreview');
+
+  if (nameInput) nameInput.value = app.currentUser.username || '';
+  if (avatarInput) avatarInput.value = app.currentUser.avatar || '';
+  if (preview) preview.src = app.currentUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+  openModal('editProfileModal');
+}
+
+function selectAvatarPreset(url) {
+  const avatarInput = document.getElementById('editAvatarUrlInput');
+  const preview = document.getElementById('editProfileAvatarPreview');
+  if (avatarInput) avatarInput.value = url;
+  if (preview) preview.src = url;
+}
+
+async function submitSaveProfile() {
+  if (!app.currentUser) return;
+  const username = document.getElementById('editUsernameInput').value.trim();
+  const avatar = document.getElementById('editAvatarUrlInput').value.trim();
+
+  if (!username) {
+    showToast('Username cannot be empty', true);
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, avatar })
+    });
+    const data = await res.json();
+    if (data.success) {
+      app.currentUser = data.user;
+      renderUserUI();
+      renderProfileView();
+      closeModal('editProfileModal');
+      showToast('Profile updated successfully! ✨');
+    } else {
+      showToast(data.error || 'Failed to update profile', true);
+    }
+  } catch (e) {
+    showToast('Failed to update profile details', true);
+  }
+}
+
+async function updateUserBaseCurrency(currency) {
+  localStorage.setItem('webwallet_currency', currency);
+  if (app.currentUser) {
+    try {
+      await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currency })
+      });
+      app.currentUser.currency = currency;
+    } catch (e) {
+      console.warn('Could not save currency preference to backend:', e);
+    }
+  }
+  renderProfileView();
+  showToast(`Base currency set to ${currency} 💱`);
+}
+
+function togglePrivacyMode(checked) {
+  if (typeof checked === 'boolean') {
+    app.isBalanceHidden = checked;
+  } else {
+    app.isBalanceHidden = !app.isBalanceHidden;
+  }
+  localStorage.setItem('webwallet_stealth_mode', app.isBalanceHidden ? '1' : '0');
+  
+  const eye = document.getElementById('visEye');
+  if (eye) eye.className = app.isBalanceHidden ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+  
+  renderPortfolioBanner();
+  renderOverviewAssets();
+  renderMyWalletGrid();
+  updateAllocationChart();
+  renderProfileView();
+  showToast(app.isBalanceHidden ? 'Stealth Privacy Mode activated 🕶️' : 'Balances revealed 👁️');
+}
+
+function toggleAudioChimes(checked) {
+  localStorage.setItem('webwallet_audio', checked ? '1' : '0');
+  showToast(checked ? 'Audio chimes enabled 🔔' : 'Audio chimes muted 🔕');
+}
+
+function promptSetAntiPhish() {
+  const current = localStorage.getItem('webwallet_antiphish') || 'WEBWALLET-VERIFIED';
+  const updated = prompt('Enter your personal Anti-Phishing safety phrase (max 20 characters):', current);
+  if (updated && updated.trim()) {
+    const clean = updated.trim().substring(0, 20).toUpperCase();
+    localStorage.setItem('webwallet_antiphish', clean);
+    const phishEl = document.getElementById('profileAntiPhishCode');
+    if (phishEl) phishEl.innerText = clean;
+    showToast('Anti-phishing phrase saved! 🛡️');
+  }
+}
+
+function promptChangePIN() {
+  openModal('authModal');
+  showToast('You can update your Master PIN or credentials via the Auth portal 🔑');
+}
+
+function copyToClipboard(text, msg = 'Copied to clipboard! 📋') {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(msg);
+    }).catch(() => {
+      fallbackCopy(text, msg);
+    });
+  } else {
+    fallbackCopy(text, msg);
+  }
+}
+
+function fallbackCopy(text, msg) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  document.body.appendChild(textArea);
+  textArea.select();
+  try {
+    document.execCommand('copy');
+    showToast(msg);
+  } catch (err) {
+    showToast('Failed to copy', true);
+  }
+  document.body.removeChild(textArea);
 }
 
 // ================= MARKET & TICKERS =================
@@ -472,6 +830,7 @@ async function loadPortfolio(silent = false) {
     renderMyWalletGrid();
     updateAllocationChart();
     await updatePerformanceChart(app.activeTimeframe);
+    renderProfileView();
   } catch (e) {
     console.error('Portfolio error:', e);
   }
@@ -903,6 +1262,7 @@ async function loadTransactions(silent = false) {
     const data = await res.json();
     app.transactions = Array.isArray(data) ? data : [];
     renderTransactionsTable();
+    renderProfileView();
   } catch (e) {
     console.error('Tx load error:', e);
   }
@@ -2315,6 +2675,9 @@ function switchView(viewName) {
 
   if (viewName === 'transactions') {
     loadTransactions();
+  }
+  if (viewName === 'profile') {
+    renderProfileView();
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });

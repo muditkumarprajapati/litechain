@@ -566,6 +566,30 @@ async def verify_user_pin(user_id: int, pin: str) -> bool:
         expected_hash = hash_pin(pin)
         return hmac.compare_digest(user["pin_hash"], expected_hash) or hmac.compare_digest(user["secret_key"], pin)
 
+async def update_user_profile(user_id: int, username: Optional[str] = None, avatar: Optional[str] = None, currency: Optional[str] = None) -> Dict:
+    async with aiosqlite.connect(DB_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cur = await conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        user = await cur.fetchone()
+        if not user:
+            return {"success": False, "error": "User not found"}
+        
+        new_username = username.strip() if (username and username.strip()) else user["username"]
+        new_avatar = avatar.strip() if (avatar and avatar.strip()) else user["avatar"]
+        new_currency = currency.strip().upper() if (currency and currency.strip()) else user["currency"]
+
+        await conn.execute("""
+            UPDATE users SET username = ?, avatar = ?, currency = ? WHERE id = ?
+        """, (new_username, new_avatar, new_currency, user_id))
+        await conn.commit()
+
+        cur = await conn.execute("""
+            SELECT id, discord_id, username, avatar, email, is_admin, is_2fa_enabled, currency, created_at, last_login
+            FROM users WHERE id = ?
+        """, (user_id,))
+        updated = await cur.fetchone()
+        return {"success": True, "user": dict(updated)}
+
 async def get_user_wallets(user_id: int) -> List[Dict]:
     async with aiosqlite.connect(DB_PATH) as conn:
         conn.row_factory = aiosqlite.Row
