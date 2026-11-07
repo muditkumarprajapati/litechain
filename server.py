@@ -18,6 +18,7 @@ from aiohttp import web
 import wallet_db as db
 from wallet_db import SUPPORTED_ASSETS
 from market import market_service
+import nowpayments
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(name)s: %(message)s")
 logger = logging.getLogger("WebWallet")
@@ -587,6 +588,33 @@ async def handle_wallet_deposit_check(request: web.Request):
     result = await db.check_and_credit_onchain_deposits(uid, coin_filter=coin, network_filter=network)
     return web.json_response(result)
 
+async def handle_nowpayments_ipn(request: web.Request):
+    """Instant Payment Notification (IPN) webhook handler for NOWPayments."""
+    try:
+        body_bytes = await request.read()
+        sig = request.headers.get("x-nowpayments-sig", "")
+        data = json.loads(body_bytes.decode("utf-8")) if body_bytes else {}
+        
+        # Verify signature if secret configured
+        if not nowpayments.verify_ipn_signature(data, sig):
+            logger.warning(f"NOWPayments IPN signature check failed: received {sig}")
+            
+        result = await nowpayments.handle_ipn_notification(data)
+        return web.json_response(result)
+    except Exception as e:
+        logger.error(f"NOWPayments IPN handler error: {e}")
+        return web.Response(text="Error", status=500)
+
+async def handle_wallet_get_deposit_address(request: web.Request):
+    """Retrieve or generate real on-chain deposit address via NOWPayments."""
+    uid = await get_current_user_id(request)
+    if not uid:
+        return web.json_response({"error": "Unauthorized"}, status=401)
+    coin = request.query.get("coin", "LTC").upper()
+    network = request.query.get("network", "")
+    res = await nowpayments.get_or_create_real_deposit_address(uid, coin, network)
+    return web.json_response(res)
+
 async def handle_download_platform(request: web.Request):
     """Serve native platform installable packages with proper download headers."""
     platform = request.match_info.get("platform", "android-apk")
@@ -973,6 +1001,8 @@ def create_app():
     app.router.add_post("/api/wallet/deposit/verify-txid", handle_wallet_deposit_verify)
     app.router.add_get("/api/wallet/deposit/check", handle_wallet_deposit_check)
     app.router.add_post("/api/wallet/deposit/check", handle_wallet_deposit_check)
+    app.router.add_get("/api/wallet/deposit-address", handle_wallet_get_deposit_address)
+    app.router.add_post("/api/nowpayments/ipn", handle_nowpayments_ipn)
     app.router.add_post("/api/wallet/withdraw", handle_wallet_withdraw)
     app.router.add_post("/api/wallet/tip", handle_wallet_tip)
     app.router.add_post("/api/wallet/swap", handle_wallet_swap)

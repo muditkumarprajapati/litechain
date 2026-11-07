@@ -1555,27 +1555,49 @@ function handleDepositCoinChange() {
   }
 }
 
-function updateDepositAddressDisplay() {
+async function updateDepositAddressDisplay() {
   const coin = document.getElementById('depCoinSelect').value;
   const net = document.getElementById('depNetworkSelect').value;
+
+  if (!app.currentUser) {
+    document.getElementById('depAddressText').innerText = "Please Sign In to view your deposit address";
+    const qr = document.getElementById('depQrImage');
+    if (qr) qr.style.display = "none";
+    return;
+  }
+
+  document.getElementById('depAddressText').innerText = "Connecting to live blockchain...";
+  document.getElementById('depMinText').innerText = `0.001 ${coin}`;
+
+  try {
+    const res = await fetch(`/api/wallet/deposit-address?coin=${coin}&network=${encodeURIComponent(net)}`);
+    const data = await res.json();
+    if (data.success && data.address) {
+      document.getElementById('depAddressText').innerText = data.address;
+      const qr = document.getElementById('depQrImage');
+      if (qr) {
+        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(data.address)}`;
+        qr.style.display = "block";
+      }
+      return;
+    }
+  } catch (e) {
+    console.error('NOWPayments address load error:', e);
+  }
+
   const asset = app.portfolio?.assets?.find(a => a.symbol === coin);
   const networkItem = asset?.networks?.find(n => n.network === net);
   let addr = networkItem ? networkItem.deposit_address : null;
 
   if (!addr) {
-    if (!app.currentUser) {
-      addr = "Please Sign In to view your deposit address";
-    } else {
-      addr = "Generating...";
-    }
+    addr = "Error generating address";
   }
 
   document.getElementById('depAddressText').innerText = addr;
-  document.getElementById('depMinText').innerText = `0.01 ${coin}`;
 
   const qr = document.getElementById('depQrImage');
   if (qr) {
-    if (addr && !addr.startsWith("Please") && addr !== "Generating...") {
+    if (addr && !addr.startsWith("Please") && !addr.startsWith("Error")) {
       qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(addr)}`;
       qr.style.display = "block";
     } else {
