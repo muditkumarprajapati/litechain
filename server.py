@@ -30,7 +30,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "1567143272936116394")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://webwallet-jqgx.onrender.com")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://webwallet-jqgx.onrender.com/api/auth/discord/callback")
 
 # Active Sessions (in-memory fast cache backed by persistent SQLite user_sessions table)
 sessions = {}
