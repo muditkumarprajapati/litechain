@@ -2022,12 +2022,17 @@ function calculateSwap() {
   }
 
   const fromAmtUsd = fromAmt * pFrom;
-  // Automated Swap platform fee: $0.01 base + progressive volume tax for >= $100
-  let feeUsd = 0.01;
-  if (fromAmtUsd >= 5000) feeUsd += fromAmtUsd * 0.005;
-  else if (fromAmtUsd >= 1000) feeUsd += fromAmtUsd * 0.003;
-  else if (fromAmtUsd >= 500) feeUsd += fromAmtUsd * 0.002;
-  else if (fromAmtUsd >= 100) feeUsd += fromAmtUsd * 0.001;
+  // Automated Swap platform fee: 0.8%
+  const feeUsd = fromAmtUsd * 0.008;
+  const feeCoin = fromAmt * 0.008;
+  const feeEl = document.getElementById('swapFeeText');
+  if (feeEl) {
+    if (fromAmt > 0) {
+      feeEl.innerText = `0.80% (~$${formatNumber(feeUsd, 2)} / ${formatNumber(feeCoin, 6)} ${fromCoin})`;
+    } else {
+      feeEl.innerText = '0.80% (Auto-routed to Treasury)';
+    }
+  }
 
   const netFromUsd = Math.max(0, fromAmtUsd - feeUsd);
   const toAmt = netFromUsd / (pTo || 1);

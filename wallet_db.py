@@ -1002,16 +1002,16 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
     """
     Automated swap engine with persistent swap_orders database:
     - Calculates live conversion
-    - Takes small swap fee ($0.01 + tax) routed directly to SpideyDev
+    - Takes 0.8% swap fee routed directly to SpideyDev
     - Deducts from_coin, credits to_coin
     """
     from_usd = from_amount * p_from
-    swap_fee_usd = calculate_platform_fee(from_usd, is_internal_transfer=True) # $0.01 + tax
-    swap_fee_coin = round(swap_fee_usd / p_from, 8) if p_from > 0 else 0.0
+    swap_fee_coin = round(from_amount * 0.008, 8)
+    swap_fee_usd = round(from_usd * 0.008, 4)
     net_from_amount = from_amount - swap_fee_coin
 
     if net_from_amount <= 0:
-        return {"success": False, "error": "Swap amount too small to cover $0.01 network fee"}
+        return {"success": False, "error": "Swap amount must be greater than zero"}
 
     net_from_usd = net_from_amount * p_from
     to_amount = round(net_from_usd / p_to, 6)
@@ -1070,7 +1070,7 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
         """, (swap_hash, user_id, from_coin, actual_from_net, to_coin, actual_to_net, from_amount, to_amount, rate, swap_fee_coin, swap_fee_usd))
 
         # Record in transactions table
-        memo = f"Swapped {from_amount} {from_coin} for {to_amount} {to_coin} (Fee: ${swap_fee_usd})"
+        memo = f"Swapped {from_amount} {from_coin} for {to_amount} {to_coin} (0.8% Fee: ${swap_fee_usd})"
         await conn.execute("""
             INSERT INTO transactions (
                 tx_hash, user_id, type, coin, network, amount, amount_usd, fee, memo, status
