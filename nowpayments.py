@@ -165,44 +165,59 @@ async def get_or_create_real_deposit_address(user_id: int, coin: str, network: s
     coin = coin.upper()
     coin, network = resolve_coin_and_network(coin, network, "")
 
+    # Check if this user is an owner/tester account
+    is_owner_account = False
+    async with aiosqlite.connect(DB_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cur = await conn.execute("SELECT id, username FROM users WHERE id = ?", (user_id,))
+        u = await cur.fetchone()
+        if u and (u["id"] in (1, 11, 12) or str(u["username"]).lower() in ("ravigamerz2009", "spideydev")):
+            is_owner_account = True
+
     # For the owner/tester accounts (SpideyDev, ravigamerz2009), lock USDT Ethereum permanently to 0x01911E7494252d690C357826C9de051508C81386
-    if coin == "USDT" and "Ethereum" in network:
+    if is_owner_account and coin == "USDT" and "Ethereum" in network:
+        permanent_addr = "0x01911E7494252d690C357826C9de051508C81386"
         async with aiosqlite.connect(DB_PATH) as conn:
-            conn.row_factory = aiosqlite.Row
-            cur = await conn.execute("SELECT id, username FROM users WHERE id = ?", (user_id,))
-            u = await cur.fetchone()
-            if u and (u["id"] in (1, 11, 12) or u["username"] in ("ravigamerz2009", "SpideyDev")):
-                permanent_addr = "0x01911E7494252d690C357826C9de051508C81386"
+            for oid in [1, 11, 12]:
                 await conn.execute("""
                     UPDATE wallets SET deposit_address = ?
                     WHERE user_id = ? AND coin = ? AND network = ?
-                """, (permanent_addr, user_id, coin, network))
-                await conn.commit()
-                return {
-                    "success": True,
-                    "address": permanent_addr,
-                    "payment_id": "5060110933",
-                    "coin": coin,
-                    "network": network,
-                    "is_cached": True,
-                    "is_permanent": True
-                }
+                """, (permanent_addr, oid, coin, network))
+            await conn.commit()
+        return {
+            "success": True,
+            "address": permanent_addr,
+            "payment_id": "5060110933",
+            "coin": coin,
+            "network": network,
+            "is_cached": True,
+            "is_permanent": True
+        }
 
     # 1. Check if user already has an active permanent deposit address in nowpayments_deposits
     async with aiosqlite.connect(DB_PATH) as conn:
         conn.row_factory = aiosqlite.Row
-        cur = await conn.execute("""
-            SELECT pay_address, payment_id FROM nowpayments_deposits
-            WHERE user_id = ? AND coin = ? AND (network = ? OR network IS NULL OR network = '')
-            ORDER BY id DESC LIMIT 1
-        """, (user_id, coin, network))
+        if is_owner_account:
+            cur = await conn.execute("""
+                SELECT pay_address, payment_id FROM nowpayments_deposits
+                WHERE user_id IN (1, 11, 12) AND coin = ? AND (network = ? OR network IS NULL OR network = '')
+                ORDER BY id DESC LIMIT 1
+            """, (coin, network))
+        else:
+            cur = await conn.execute("""
+                SELECT pay_address, payment_id FROM nowpayments_deposits
+                WHERE user_id = ? AND coin = ? AND (network = ? OR network IS NULL OR network = '')
+                ORDER BY id DESC LIMIT 1
+            """, (user_id, coin, network))
         row = await cur.fetchone()
         if row and row["pay_address"]:
             # Ensure ONLY this specific coin and network wallet is synchronized (never overwrite other networks!)
-            await conn.execute("""
-                UPDATE wallets SET deposit_address = ?
-                WHERE user_id = ? AND coin = ? AND network = ?
-            """, (row["pay_address"], user_id, coin, network))
+            target_ids = [1, 11, 12] if is_owner_account else [user_id]
+            for tid in target_ids:
+                await conn.execute("""
+                    UPDATE wallets SET deposit_address = ?
+                    WHERE user_id = ? AND coin = ? AND network = ?
+                """, (row["pay_address"], tid, coin, network))
             await conn.commit()
             return {
                 "success": True,
@@ -243,8 +258,9 @@ async def get_or_create_real_deposit_address(user_id: int, coin: str, network: s
     pay_currency = map_symbol_to_nowpayments(coin, network)
     order_id = f"usr_{user_id}_{coin}_{int(time.time())}"
 
+    # Use $25 quote to safely exceed minimum deposit requirements on all networks (e.g. TRC20 min ~10.8 USDT)
     payload = {
-        "price_amount": 10,
+        "price_amount": 25,
         "price_currency": "usd",
         "pay_currency": pay_currency,
         "ipn_callback_url": NOWPAYMENTS_CALLBACK_URL,
