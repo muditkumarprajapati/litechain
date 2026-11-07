@@ -17,8 +17,8 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger("NOWPayments")
 
-NOWPAYMENTS_API_KEY = os.getenv("NOWPAYMENTS_API_KEY", "")
-NOWPAYMENTS_IPN_SECRET = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
+NOWPAYMENTS_API_KEY = os.getenv("NOWPAYMENTS_API_KEY", "9B3AB5J-BDBM9G5-QJNVX1H-EE47G3P")
+NOWPAYMENTS_IPN_SECRET = os.getenv("NOWPAYMENTS_IPN_SECRET", "un+D9DxR6APXm0z2LLE3HM5jW1bmwH03")
 NOWPAYMENTS_CALLBACK_URL = os.getenv("NOWPAYMENTS_CALLBACK_URL", "https://webwallet-jqgx.onrender.com/api/nowpayments/ipn")
 NOWPAYMENTS_API_BASE = "https://api.nowpayments.io/v1"
 
