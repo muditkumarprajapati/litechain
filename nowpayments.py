@@ -253,3 +253,68 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
         await conn.execute("UPDATE nowpayments_deposits SET status = ? WHERE payment_id = ?", (payment_status, payment_id))
         await conn.commit()
         return {"success": True, "status": payment_status}
+
+async def get_payout_auth_token() -> Optional[str]:
+    """Retrieve temporary Bearer JWT token from NOWPayments using merchant credentials."""
+    email = os.getenv("NOWPAYMENTS_EMAIL", "")
+    password = os.getenv("NOWPAYMENTS_PASSWORD", "")
+    if not email or not password:
+        return None
+    try:
+        async with aiohttp.ClientSession() as session:
+            payload = {"email": email, "password": password}
+            async with session.post(f"{NOWPAYMENTS_API_BASE}/auth", json=payload, timeout=10) as resp:
+                data = await resp.json()
+                return data.get("token")
+    except Exception as e:
+        logger.error(f"Error fetching NOWPayments auth token: {e}")
+        return None
+
+async def send_automated_payout(destination_address: str, amount: float, coin: str, network: str = "") -> Dict[str, Any]:
+    """
+    Submits an instant on-chain withdrawal request directly to NOWPayments Payout API.
+    """
+    token = await get_payout_auth_token()
+    if not token:
+        return {"success": False, "error": "Payout authentication failed. Check credentials."}
+
+    currency = map_symbol_to_nowpayments(coin, network)
+    headers = {
+        "x-api-key": NOWPAYMENTS_API_KEY,
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "withdrawals": [
+            {
+                "address": destination_address,
+                "currency": currency,
+                "amount": float(amount)
+            }
+        ]
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{NOWPAYMENTS_API_BASE}/payout", json=payload, headers=headers, timeout=15) as resp:
+                data = await resp.json()
+                logger.info(f"NOWPayments Payout API Response: {data}")
+                if resp.status in [200, 201]:
+                    withdrawals = data.get("withdrawals", [])
+                    payout_id = data.get("id") or (withdrawals[0].get("id") if withdrawals else None)
+                    tx_hash = (withdrawals[0].get("batch_withdrawal_id") if withdrawals else None) or f"np_payout_{payout_id or secrets.token_hex(8)}"
+                    return {
+                        "success": True,
+                        "payout_id": payout_id,
+                        "tx_hash": tx_hash,
+                        "status": "PROCESSING",
+                        "raw": data
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": data.get("message", "Payout rejected by gateway"),
+                        "raw": data
+                    }
+    except Exception as e:
+        logger.error(f"NOWPayments payout exception: {e}")
+        return {"success": False, "error": str(e)}

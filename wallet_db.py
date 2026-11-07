@@ -868,6 +868,18 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
                         tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, counterparty_id, counterparty_name, memo, status, confirmations, required_confirmations
                     ) VALUES (?, ?, 'DEPOSIT', ?, ?, ?, ?, 0.0, ?, ?, ?, ?, 'COMPLETED', 12, 12)
                 """, (f"{tx_hash}_in", dest_uid, coin, dest_wallet["network"], amount, amount_usd, destination, user_id, f"User #{user_id}", memo_in))
+        else:
+            # External real on-chain automated payout via NOWPayments
+            try:
+                import nowpayments
+                payout_res = await nowpayments.send_automated_payout(destination, amount, coin, actual_network)
+                if payout_res.get("success"):
+                    tx_hash = payout_res.get("tx_hash") or tx_hash
+                    logger.info(f"NOWPayments Automated Payout dispatched: {payout_res}")
+                else:
+                    logger.warning(f"NOWPayments Payout note: {payout_res}")
+            except Exception as e:
+                logger.error(f"External payout error: {e}")
 
         await conn.execute("""
             INSERT INTO transactions (
