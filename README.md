@@ -13,8 +13,9 @@ A full-stack, enterprise-grade cryptocurrency financial platform inspired by **C
 ### 1. 🔗 Exact OAuth2 Redirect URL to Add in Discord Developer Portal:
 Go to **[Discord Developer Portal](https://discord.com/developers/applications/1567143272936116394/oauth2/general)** ➔ **OAuth2** ➔ **Redirects**:
 ```
-http://localhost:8080/api/auth/discord/callback
+https://webwallet-jqgx.onrender.com/
 ```
+*(Also add `https://webwallet-jqgx.onrender.com/api/auth/discord/callback` and `http://localhost:8080/api/auth/discord/callback` for local development).*
 
 ### 2. 🤖 Invite Bot to Your Discord Server (Required to Pull Members):
 Click the link below to invite the bot to your server with the required permissions:

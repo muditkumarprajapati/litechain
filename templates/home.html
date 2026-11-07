@@ -809,6 +809,31 @@
     }
     loadHomeMarketRates();
     setInterval(loadHomeMarketRates, 10000);
+
+    // Discord OAuth2 Implicit Redirect Handler (when redirected to root /)
+    (async function() {
+      const hash = window.location.hash ? window.location.hash.substring(1) : '';
+      if (hash && hash.includes('access_token=')) {
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          try {
+            const res = await fetch('/api/auth/discord/token-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ access_token: accessToken })
+            });
+            const data = await res.json();
+            if (data.success && data.token) {
+              localStorage.setItem('webwallet_session_token', data.token);
+            }
+          } catch (e) {
+            console.error('Discord redirect login failed:', e);
+          }
+          window.location.href = '/app?login_success=1';
+        }
+      }
+    })();
   </script>
 </body>
 </html>

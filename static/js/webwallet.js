@@ -48,6 +48,27 @@ let app = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const hash = window.location.hash ? window.location.hash.substring(1) : '';
+  if (hash && hash.includes('access_token=')) {
+    const params = new URLSearchParams(hash);
+    const token = params.get('access_token');
+    if (token) {
+      try {
+        const res = await fetch('/api/auth/discord/token-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token: token })
+        });
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem('webwallet_session_token', data.token);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (e) {
+        console.error('Hash token auth error:', e);
+      }
+    }
+  }
   await initCharts();
   await checkAuth();
   await loadMarketOverview();

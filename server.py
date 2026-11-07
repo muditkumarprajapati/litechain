@@ -12,6 +12,7 @@ import uuid
 import secrets
 import hashlib
 from typing import Optional, Dict, Any, List, Tuple
+from urllib.parse import quote
 import aiohttp
 from aiohttp import web
 import wallet_db as db
@@ -29,7 +30,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "1567143272936116394")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8080/api/auth/discord/callback")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://webwallet-jqgx.onrender.com/")
 
 # Active Sessions (in-memory fast cache backed by persistent SQLite user_sessions table)
 sessions = {}
@@ -78,6 +79,10 @@ def set_session_cookie(resp: web.Response, session_token: str):
     )
 
 async def handle_home(request: web.Request):
+    # Intercept Discord OAuth2 code or error when root URL is used as redirect_uri
+    if request.query.get("code") or (request.query.get("error") and ("access" in request.query.get("error", "") or "denied" in request.query.get("error", ""))):
+        return await handle_auth_discord_callback(request)
+
     html_path = os.path.join(TEMPLATES_DIR, "home.html")
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
@@ -206,9 +211,11 @@ async def handle_auth_discord_login(request: web.Request):
     state = secrets.token_urlsafe(16)
     # If client secret is configured in environment, use code flow; otherwise use implicit token grant
     resp_type = "code" if DISCORD_CLIENT_SECRET else "token"
+    redirect_uri = os.getenv("DISCORD_REDIRECT_URI", DISCORD_REDIRECT_URI)
+    encoded_redirect = quote(redirect_uri, safe="")
     oauth_url = (
         f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}"
-        f"&redirect_uri={DISCORD_REDIRECT_URI}&response_type={resp_type}&scope=identify%20email%20guilds.join&state={state}"
+        f"&redirect_uri={encoded_redirect}&response_type={resp_type}&scope=identify%20email%20guilds.join&state={state}"
     )
     raise web.HTTPFound(oauth_url)
 
@@ -222,13 +229,14 @@ async def handle_auth_discord_callback(request: web.Request):
     # If code is provided and DISCORD_CLIENT_SECRET is available, exchange it server-side
     if code and DISCORD_CLIENT_SECRET:
         try:
+            redirect_uri = os.getenv("DISCORD_REDIRECT_URI", DISCORD_REDIRECT_URI)
             async with aiohttp.ClientSession() as session:
                 payload = {
                     "client_id": DISCORD_CLIENT_ID,
                     "client_secret": DISCORD_CLIENT_SECRET,
                     "grant_type": "authorization_code",
                     "code": code,
-                    "redirect_uri": DISCORD_REDIRECT_URI
+                    "redirect_uri": redirect_uri
                 }
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
                 async with session.post("https://discord.com/api/oauth2/token", data=payload, headers=headers) as token_resp:
