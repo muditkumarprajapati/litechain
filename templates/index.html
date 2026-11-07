@@ -1196,9 +1196,6 @@
         <button class="tf-btn" id="tabBtnDiscord" style="flex:1; min-width:80px;" onclick="switchAuthTab('discord')">
           <i class="fa-brands fa-discord"></i> Discord
         </button>
-        <button class="tf-btn" id="tabBtnPin" style="flex:1; min-width:80px;" onclick="switchAuthTab('pin')">
-          <i class="fa-solid fa-key"></i> PIN
-        </button>
       </div>
 
       <!-- TAB 1: SIGN IN -->
@@ -1305,24 +1302,6 @@
           <div><i class="fa-solid fa-check" style="color:var(--accent-emerald); margin-right:6px;"></i> Zero manual hold
             on transfers</div>
         </div>
-      </div>
-
-      <!-- TAB 4: PIN / PASSCODE -->
-      <div id="authTabPin" style="display:none;">
-        <div class="form-group">
-          <label class="form-label">User ID, Username or Email</label>
-          <input type="text" class="form-input" id="pinIdentifierInput" placeholder="e.g. username or Discord ID">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Security PIN or Secret Key</label>
-          <input type="password" maxlength="48" class="form-input" id="pinSecurityInput"
-            placeholder="Enter PIN (e.g. 123456)">
-        </div>
-        <button class="btn-action primary"
-          style="width:100%; justify-content:center; padding:13px; font-size:0.95rem; margin-top:6px;"
-          onclick="submitPasscodeLogin()">
-          <i class="fa-solid fa-key"></i> Authenticate with PIN
-        </button>
       </div>
 
     </div>
@@ -1942,7 +1921,7 @@
   </style>
 
   <!-- Client JavaScript -->
-  <script src="/static/js/webwallet.js?v=2.7.7"></script>
+  <script src="/static/js/webwallet.js?v=2.7.8"></script>
 </body>
 
 </html>

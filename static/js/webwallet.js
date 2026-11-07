@@ -100,7 +100,7 @@ async function checkAuth() {
 
 function switchAuthTab(tab) {
   app.authTab = tab;
-  ['login', 'register', 'discord', 'pin'].forEach(t => {
+  ['login', 'register', 'discord'].forEach(t => {
     const tabEl = document.getElementById(`authTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     const btnEl = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
