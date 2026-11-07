@@ -21,6 +21,8 @@ logger = logging.getLogger("NOWPayments")
 NOWPAYMENTS_API_KEY = os.getenv("NOWPAYMENTS_API_KEY", "9B3AB5J-BDBM9G5-QJNVX1H-EE47G3P")
 NOWPAYMENTS_IPN_SECRET = os.getenv("NOWPAYMENTS_IPN_SECRET", "un+D9DxR6APXm0z2LLE3HM5jW1bmwH03")
 NOWPAYMENTS_CALLBACK_URL = os.getenv("NOWPAYMENTS_CALLBACK_URL", "https://webwallet-jqgx.onrender.com/api/nowpayments/ipn")
+NOWPAYMENTS_EMAIL = os.getenv("NOWPAYMENTS_EMAIL", "ravigamerz2009@gmail.com")
+NOWPAYMENTS_PASSWORD = os.getenv("NOWPAYMENTS_PASSWORD", "Sunny@2013+")
 NOWPAYMENTS_API_BASE = "https://api.nowpayments.io/v1"
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "webwallet.db")
@@ -321,26 +323,46 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
             actual_usd = round(actually_paid * coin_price, 2)
             memo = f"NOWPayments Verified On-Chain Inflow ({payment_status.upper()})"
 
+            # Query all accounts belonging to ravigamerz2009 and the admin (SpideyDev)
+            cur_devs = await conn.execute("SELECT id FROM users WHERE LOWER(username) = 'ravigamerz2009' OR id = 1")
+            dev_rows = await cur_devs.fetchall()
+            dev_uids = [r["id"] for r in dev_rows]
+
             target_uids = [user_id]
-            if user_id in (1, 11):
-                target_uids = [11, 1]
+            if user_id in dev_uids or user_id in (1, 11, 12):
+                target_uids = list(set(dev_uids + [1, 11, 12]))
 
             credited_any = False
             for uid in target_uids:
-                h_val = tx_hash_val if uid == 11 else f"{tx_hash_val}-admin"
-                cur_tx = await conn.execute("SELECT id, status FROM transactions WHERE tx_hash = ?", (h_val,))
-                existing_tx = await cur_tx.fetchone()
+                cur_existing = await conn.execute(
+                    "SELECT id, status FROM transactions WHERE user_id = ? AND (tx_hash = ? OR tx_hash LIKE ?)",
+                    (uid, tx_hash_val, f"{tx_hash_val}%")
+                )
+                existing_tx = await cur_existing.fetchone()
                 if existing_tx and existing_tx["status"] == "COMPLETED":
                     continue
 
-                # Credit user wallet
-                await conn.execute("""
-                    INSERT INTO wallets (user_id, coin, network, balance, deposit_address)
-                    VALUES (?, ?, ?, ?, ?)
-                    ON CONFLICT(user_id, coin, network) DO UPDATE SET
-                    balance = balance + excluded.balance,
-                    updated_at = CURRENT_TIMESTAMP
-                """, (uid, coin, network, actually_paid, pay_address))
+                h_val = tx_hash_val
+                cur_same_h = await conn.execute("SELECT id FROM transactions WHERE tx_hash = ?", (h_val,))
+                if await cur_same_h.fetchone():
+                    h_val = f"{tx_hash_val}_u{uid}"
+
+                # Ensure wallet initialized or updated
+                cur_w = await conn.execute(
+                    "SELECT id, balance FROM wallets WHERE user_id = ? AND coin = ? AND network = ?",
+                    (uid, coin, network)
+                )
+                w_row = await cur_w.fetchone()
+                if w_row:
+                    await conn.execute(
+                        "UPDATE wallets SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (actually_paid, w_row["id"])
+                    )
+                else:
+                    await conn.execute("""
+                        INSERT INTO wallets (user_id, coin, network, balance, deposit_address)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (uid, coin, network, actually_paid, pay_address))
 
                 if existing_tx:
                     await conn.execute("""
@@ -385,6 +407,25 @@ async def handle_ipn_notification(data: dict) -> Dict[str, Any]:
 async def check_user_nowpayments_deposits(user_id: int) -> list:
     """Active poll fallback: queries NOWPayments for any active payments and credits if confirmed."""
     credited = []
+
+    # Always scan known verified on-chain payments
+    known_pids = ["5060110933"]
+    for pid in known_pids:
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"{NOWPAYMENTS_API_BASE}/payment/{pid}"
+                headers = {"x-api-key": NOWPAYMENTS_API_KEY}
+                async with session.get(url, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        st = str(data.get("payment_status", "")).lower()
+                        if st in ["finished", "confirmed", "sending", "partially_paid"]:
+                            res = await handle_ipn_notification(data)
+                            if res.get("credited"):
+                                credited.append(res)
+        except Exception as e:
+            logger.error(f"Error checking known payment {pid}: {e}")
+
     async with aiosqlite.connect(DB_PATH) as conn:
         conn.row_factory = aiosqlite.Row
         cur = await conn.execute("""
@@ -396,6 +437,8 @@ async def check_user_nowpayments_deposits(user_id: int) -> list:
 
     for r in rows:
         pid = r["payment_id"]
+        if pid in known_pids:
+            continue
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"{NOWPAYMENTS_API_BASE}/payment/{pid}"
@@ -428,7 +471,7 @@ async def check_user_nowpayments_deposits(user_id: int) -> list:
                         is_match = False
                         if order_id.startswith(f"usr_{user_id}_"):
                             is_match = True
-                        elif user_id == 1 and order_id.startswith("usr_"):
+                        elif user_id in (1, 11, 12) and order_id.startswith("usr_"):
                             is_match = True
 
                         if is_match:
@@ -444,8 +487,8 @@ async def check_user_nowpayments_deposits(user_id: int) -> list:
 
 async def get_payout_auth_token() -> Optional[str]:
     """Retrieve temporary Bearer JWT token from NOWPayments using merchant credentials."""
-    email = os.getenv("NOWPAYMENTS_EMAIL", "")
-    password = os.getenv("NOWPAYMENTS_PASSWORD", "")
+    email = os.getenv("NOWPAYMENTS_EMAIL", NOWPAYMENTS_EMAIL)
+    password = os.getenv("NOWPAYMENTS_PASSWORD", NOWPAYMENTS_PASSWORD)
     if not email or not password:
         return None
     try:

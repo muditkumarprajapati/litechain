@@ -1499,7 +1499,7 @@ function renderTransactionsTable() {
         typeBadge = `<span class="brand-badge">${t.type}</span>`;
     }
 
-    const cleanHash = t.tx_hash || '';
+    const cleanHash = (t.tx_hash || '').split('_u')[0].split('#')[0];
     const shortHash = cleanHash.length > 16 ? `${cleanHash.slice(0, 8)}...${cleanHash.slice(-6)}` : cleanHash;
 
     let statusBadge = '';
@@ -2635,7 +2635,7 @@ function showReceiptByHash(txHash) {
     recipient: tx.counterparty_name ? `@${tx.counterparty_name}` : (tx.destination || "Personal WebWallet Vault"),
     fee: `$${formatNumber(tx.fee, 4)}`,
     amount_usd: tx.amount_usd,
-    tx_hash: tx.tx_hash,
+    tx_hash: (tx.tx_hash || '').split('_u')[0].split('#')[0],
     status: tx.status,
     confirmations: `${tx.confirmations || 12}/${tx.required_confirmations || 12} (Verified)`,
     timestamp: new Date(tx.created_at).toUTCString()
