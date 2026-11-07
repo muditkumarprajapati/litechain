@@ -908,6 +908,7 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
         await credit_owner_revenue(conn, tx_hash, user_id, "WITHDRAWAL_FEE", coin, actual_network, platform_fee_coin, platform_fee_usd)
 
         status = "COMPLETED"
+        payout_memo = None
 
         # Check if destination matches any user's deposit address (Internal Transfer)
         cur_dest = await conn.execute("""
@@ -940,17 +941,23 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
                 payout_res = await nowpayments.send_automated_payout(destination, send_amount, coin, actual_network)
                 if payout_res.get("success"):
                     tx_hash = payout_res.get("tx_hash") or tx_hash
+                    status = "COMPLETED"
+                    payout_memo = "NOWPayments On-Chain Broadcast Successful"
                     logger.info(f"NOWPayments Automated Payout dispatched: {payout_res}")
                 else:
+                    status = "PENDING"
+                    payout_memo = f"Pending Broadcast: {payout_res.get('error', 'Awaiting Custody Dispatch')}"
                     logger.warning(f"NOWPayments Payout note: {payout_res}")
             except Exception as e:
+                status = "PENDING"
+                payout_memo = f"Pending Dispatch: {e}"
                 logger.error(f"External payout error: {e}")
 
         await conn.execute("""
             INSERT INTO transactions (
-                tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, status, confirmations, required_confirmations
-            ) VALUES (?, ?, 'WITHDRAW', ?, ?, ?, ?, ?, ?, ?, 12, 12)
-        """, (tx_hash, user_id, coin, actual_network, send_amount, round(send_amount * price_usd, 2), total_fee, destination, status))
+                tx_hash, user_id, type, coin, network, amount, amount_usd, fee, destination, memo, status, confirmations, required_confirmations
+            ) VALUES (?, ?, 'WITHDRAW', ?, ?, ?, ?, ?, ?, ?, ?, 12, 12)
+        """, (tx_hash, user_id, coin, actual_network, send_amount, round(send_amount * price_usd, 2), total_fee, destination, payout_memo, status))
 
         await conn.commit()
         return {
