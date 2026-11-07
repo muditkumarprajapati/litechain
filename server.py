@@ -30,7 +30,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "1567143272936116394")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://webwallet-jqgx.onrender.com/")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://webwallet-jqgx.onrender.com")
 
 # Active Sessions (in-memory fast cache backed by persistent SQLite user_sessions table)
 sessions = {}
@@ -97,6 +97,10 @@ async def handle_terms(request: web.Request):
     return web.Response(text="<h1>Terms of Service Template Missing</h1>", content_type="text/html", status=404)
 
 async def handle_index(request: web.Request):
+    # Intercept Discord OAuth2 code or error when redirected to /app
+    if request.query.get("code") or (request.query.get("error") and ("access" in request.query.get("error", "") or "denied" in request.query.get("error", ""))):
+        return await handle_auth_discord_callback(request)
+
     html_path = os.path.join(TEMPLATES_DIR, "index.html")
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
@@ -211,7 +215,16 @@ async def handle_auth_discord_login(request: web.Request):
     state = secrets.token_urlsafe(16)
     # If client secret is configured in environment, use code flow; otherwise use implicit token grant
     resp_type = "code" if DISCORD_CLIENT_SECRET else "token"
-    redirect_uri = os.getenv("DISCORD_REDIRECT_URI", DISCORD_REDIRECT_URI)
+    
+    # Priority: query override -> env var -> configured default
+    redirect_uri = request.query.get("redirect_uri") or os.getenv("DISCORD_REDIRECT_URI", DISCORD_REDIRECT_URI)
+    
+    # If query param slash=1 was specified, ensure trailing slash, otherwise remove trailing slash for domain roots
+    if request.query.get("slash") == "1" and not redirect_uri.endswith("/"):
+        redirect_uri = f"{redirect_uri}/"
+    elif not request.query.get("slash") and redirect_uri.endswith("/") and redirect_uri.count("/") == 3:
+        redirect_uri = redirect_uri.rstrip("/")
+        
     encoded_redirect = quote(redirect_uri, safe="")
     oauth_url = (
         f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}"
@@ -224,12 +237,14 @@ async def handle_auth_discord_callback(request: web.Request):
     error = request.query.get("error")
 
     if error:
-        raise web.HTTPFound(f"/?error={error}")
+        raise web.HTTPFound(f"/app?error={error}")
 
     # If code is provided and DISCORD_CLIENT_SECRET is available, exchange it server-side
     if code and DISCORD_CLIENT_SECRET:
         try:
             redirect_uri = os.getenv("DISCORD_REDIRECT_URI", DISCORD_REDIRECT_URI)
+            if redirect_uri.endswith("/") and redirect_uri.count("/") == 3:
+                redirect_uri = redirect_uri.rstrip("/")
             async with aiohttp.ClientSession() as session:
                 payload = {
                     "client_id": DISCORD_CLIENT_ID,
