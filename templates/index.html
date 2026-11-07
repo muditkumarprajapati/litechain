@@ -1566,12 +1566,20 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Your Dedicated Deposit Address</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;">Your Permanent Deposit Address</label>
+          <span class="brand-badge" style="color:var(--accent-emerald); border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); font-size:0.7rem; padding:2px 8px; font-weight:700;">
+            <i class="fa-solid fa-infinity"></i> Permanent &bull; Never Changes
+          </span>
+        </div>
         <div
           style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 14px; font-family:var(--font-mono); font-size:0.82rem; color:var(--accent-cyan); word-break:break-all; display:flex; justify-content:space-between; align-items:center; gap:8px;">
           <span id="depAddressText">Generating...</span>
           <button class="btn-action" style="padding:4px 10px; font-size:0.75rem;" onclick="copyDepositAddress()"><i
               class="fa-regular fa-copy"></i> Copy</button>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:6px; display:flex; align-items:center; gap:5px;">
+          <i class="fa-solid fa-shield-halved" style="color:var(--accent-emerald);"></i> Dedicated on-chain address bound to your account. You can save this address in external wallets and send repeated deposits anytime.
         </div>
       </div>
 

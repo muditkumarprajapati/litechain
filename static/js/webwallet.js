@@ -1989,7 +1989,22 @@ async function updateDepositAddressDisplay() {
     return;
   }
 
-  document.getElementById('depAddressText').innerText = "Connecting to live blockchain...";
+  // Instantly show existing permanent address from local portfolio cache if available
+  const asset = app.portfolio?.assets?.find(a => a.symbol === coin);
+  const networkItem = asset?.networks?.find(n => n.network === net);
+  let cachedAddr = networkItem ? networkItem.deposit_address : null;
+
+  if (cachedAddr && !cachedAddr.startsWith("Please") && !cachedAddr.startsWith("Error")) {
+    document.getElementById('depAddressText').innerText = cachedAddr;
+    const qr = document.getElementById('depQrImage');
+    if (qr) {
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cachedAddr)}`;
+      qr.style.display = "block";
+    }
+  } else {
+    document.getElementById('depAddressText').innerText = "Loading permanent vault address...";
+  }
+
   document.getElementById('depMinText').innerText = `0.001 ${coin}`;
 
   try {
@@ -2002,22 +2017,21 @@ async function updateDepositAddressDisplay() {
         qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(data.address)}`;
         qr.style.display = "block";
       }
+      if (networkItem) {
+        networkItem.deposit_address = data.address;
+      }
       return;
     }
   } catch (e) {
-    console.error('NOWPayments address load error:', e);
+    console.error('Deposit address load error:', e);
   }
 
-  const asset = app.portfolio?.assets?.find(a => a.symbol === coin);
-  const networkItem = asset?.networks?.find(n => n.network === net);
   let addr = networkItem ? networkItem.deposit_address : null;
-
   if (!addr) {
     addr = "Error generating address";
   }
 
   document.getElementById('depAddressText').innerText = addr;
-
   const qr = document.getElementById('depQrImage');
   if (qr) {
     if (addr && !addr.startsWith("Please") && !addr.startsWith("Error")) {
