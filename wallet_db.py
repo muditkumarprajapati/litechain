@@ -854,41 +854,55 @@ async def create_withdrawal_request(user_id: int, coin: str, network: str, amoun
     platform_fee_usd = calculate_platform_fee(amount_usd, is_internal_transfer=False) # $0.02 + tax if big
     platform_fee_coin = round(platform_fee_usd / price_usd, 8) if price_usd > 0 else 0.0
     total_fee = round(base_chain_gas + platform_fee_coin, 8)
-    total_deduct = amount + total_fee
+
+    if amount <= total_fee:
+        return {"success": False, "error": f"Withdrawal amount ({amount} {coin}) must be greater than network fee ({round(total_fee, 6)} {coin})."}
+
     tx_hash = f"0x{uuid.uuid4().hex}"
 
     async with aiosqlite.connect(DB_PATH) as conn:
         await conn.execute("BEGIN IMMEDIATE;")
         conn.row_factory = aiosqlite.Row
         
+        # Check total balance across all networks for this coin
+        cur_tot = await conn.execute("SELECT SUM(balance) as tot FROM wallets WHERE user_id = ? AND coin = ?", (user_id, coin))
+        tot_row = await cur_tot.fetchone()
+        tot_bal = tot_row["tot"] if tot_row and tot_row["tot"] else 0.0
+
+        if tot_bal < amount:
+            await conn.rollback()
+            return {"success": False, "error": f"Insufficient {coin} balance. Available balance: {round(tot_bal, 6)} {coin}."}
+
+        # Find the best funded wallet for this coin, prioritizing network match and highest balance
         cur = await conn.execute("""
             SELECT id, network, balance FROM wallets WHERE user_id = ? AND coin = ?
-            ORDER BY (network = ?) DESC LIMIT 1
-        """, (user_id, coin, network))
+            ORDER BY (balance >= ?) DESC, balance DESC, (network = ?) DESC LIMIT 1
+        """, (user_id, coin, amount, network))
         wallet = await cur.fetchone()
 
-        # Cwallet-style Auto-Gas Swapper:
-        # All blockchain network fees (TRC20, ERC20, BEP20, Solana, etc.) are paid directly in the withdrawn token (e.g. USDT)
-        # Users NEVER need native gas (TRX, ETH, or BNB) in their wallet!
-        send_amount = amount
-        if wallet["balance"] >= total_deduct:
-            actual_deduct = total_deduct
-            send_amount = amount
-        elif wallet["balance"] >= amount and (amount - total_fee) > 0:
-            # Auto-deduct fee from withdrawal amount (Cwallet MAX style)
-            actual_deduct = amount
-            send_amount = round(amount - total_fee, 8)
+        actual_network = wallet["network"] if wallet else network
+
+        # Fee is debited directly from the sending amount:
+        # Total deducted from user's wallet = amount
+        # Net amount sent to recipient = amount - total_fee
+        actual_deduct = amount
+        send_amount = round(amount - total_fee, 8)
+
+        # Deduct from user's wallet (or across funded wallets if split)
+        if wallet and wallet["balance"] >= actual_deduct:
+            await conn.execute("""
+                UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (actual_deduct, wallet["id"]))
         else:
-            await conn.rollback()
-            return {"success": False, "error": f"Insufficient wallet balance. Total required: {round(total_deduct, 6)} {coin} (includes {round(total_fee, 4)} {coin} network gas & platform fee)."}
-
-        actual_network = wallet["network"]
-
-        # Deduct balance
-        await conn.execute("""
-            UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (actual_deduct, wallet["id"]))
+            rem = actual_deduct
+            cur_w = await conn.execute("SELECT id, balance FROM wallets WHERE user_id = ? AND coin = ? AND balance > 0 ORDER BY balance DESC", (user_id, coin))
+            for rw in await cur_w.fetchall():
+                if rem <= 0:
+                    break
+                d = min(rw["balance"], rem)
+                await conn.execute("UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (d, rw["id"]))
+                rem = round(rem - d, 8)
 
         # Credit SpideyDev with platform fee and tax
         await credit_owner_revenue(conn, tx_hash, user_id, "WITHDRAWAL_FEE", coin, actual_network, platform_fee_coin, platform_fee_usd)
@@ -1082,30 +1096,44 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
 
     swap_hash = f"swap_{secrets.token_hex(12)}"
 
+    meta_from = next((a for a in SUPPORTED_ASSETS if a["symbol"] == from_coin), None)
+    meta_to = next((a for a in SUPPORTED_ASSETS if a["symbol"] == to_coin), None)
+
     async with aiosqlite.connect(DB_PATH) as conn:
         await conn.execute("BEGIN IMMEDIATE;")
         conn.row_factory = aiosqlite.Row
 
-        cur = await conn.execute("""
-            SELECT id, network, balance FROM wallets WHERE user_id = ? AND coin = ?
-            ORDER BY (network = ?) DESC, (balance >= ?) DESC, balance DESC LIMIT 1
-        """, (user_id, from_coin, from_net, from_amount))
-        wallet = await cur.fetchone()
+        # Check total balance across all networks for from_coin
+        cur_tot = await conn.execute("SELECT SUM(balance) as tot FROM wallets WHERE user_id = ? AND coin = ?", (user_id, from_coin))
+        tot_row = await cur_tot.fetchone()
+        tot_bal = tot_row["tot"] if tot_row and tot_row["tot"] else 0.0
 
-        if not wallet or wallet["balance"] < from_amount:
-            cur_tot = await conn.execute("SELECT SUM(balance) as tot FROM wallets WHERE user_id = ? AND coin = ?", (user_id, from_coin))
-            tot_row = await cur_tot.fetchone()
-            tot_bal = tot_row["tot"] if tot_row and tot_row["tot"] else 0.0
+        if tot_bal < from_amount:
             await conn.rollback()
             return {"success": False, "error": f"Insufficient {from_coin} balance. Available: {round(tot_bal, 6)} {from_coin}"}
 
-        actual_from_net = wallet["network"]
+        # Deduct from_amount from user's funded wallet(s)
+        rem_to_deduct = from_amount
+        actual_from_net = None
 
-        # Deduct from_coin
-        await conn.execute("""
-            UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (from_amount, wallet["id"]))
+        cur_funds = await conn.execute("""
+            SELECT id, network, balance FROM wallets 
+            WHERE user_id = ? AND coin = ? AND balance > 0
+            ORDER BY (balance >= ?) DESC, (network = ?) DESC, balance DESC
+        """, (user_id, from_coin, from_amount, from_net))
+        funded_wallets = await cur_funds.fetchall()
+
+        for w in funded_wallets:
+            if rem_to_deduct <= 0:
+                break
+            deduct = min(w["balance"], rem_to_deduct)
+            await conn.execute("UPDATE wallets SET balance = balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (deduct, w["id"]))
+            rem_to_deduct = round(rem_to_deduct - deduct, 8)
+            if not actual_from_net:
+                actual_from_net = w["network"]
+
+        if not actual_from_net:
+            actual_from_net = from_net or (meta_from["default_network"] if meta_from else from_coin)
 
         # Find or use destination network
         cur_to = await conn.execute("""
@@ -1113,7 +1141,7 @@ async def execute_automated_swap(user_id: int, from_coin: str, from_net: str, to
             ORDER BY (network = ?) DESC, balance DESC LIMIT 1
         """, (user_id, to_coin, to_net))
         to_row = await cur_to.fetchone()
-        actual_to_net = to_row["network"] if to_row else to_net
+        actual_to_net = to_row["network"] if to_row else (to_net or (meta_to["default_network"] if meta_to else to_coin))
         to_addr = to_row["deposit_address"] if to_row and to_row["deposit_address"] else generate_crypto_address(to_coin, user_id, actual_to_net)
 
         # Credit to_coin

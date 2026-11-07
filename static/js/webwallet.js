@@ -2815,7 +2815,22 @@ function openModal(id) {
   }
   if (id === 'withdrawModal') handleWithdrawCoinChange();
   if (id === 'tipModal') handleTipCoinChange();
-  if (id === 'swapModal') calculateSwap();
+  if (id === 'swapModal') {
+    const fromEl = document.getElementById('swapFromCoin');
+    if (fromEl && app.portfolio?.assets) {
+      const fundedAsset = app.portfolio.assets.find(a => a.total_balance > 0);
+      if (fundedAsset && (!fromEl.value || (app.portfolio.assets.find(a => a.symbol === fromEl.value)?.total_balance || 0) === 0)) {
+        fromEl.value = fundedAsset.symbol;
+        const toEl = document.getElementById('swapToCoin');
+        if (toEl && toEl.value === fundedAsset.symbol) {
+          const alt = Array.from(toEl.options).find(o => o.value !== fundedAsset.symbol);
+          if (alt) toEl.value = alt.value;
+        }
+      }
+    }
+    updateSwapBalances();
+    calculateSwap();
+  }
 }
 
 function closeModal(id) {
